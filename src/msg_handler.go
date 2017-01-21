@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os/exec"
+	//"strings"
 )
 
 const (
@@ -21,19 +23,36 @@ type Agent struct {
 	Term_vdisk []string
 }
 
+func genUUID() string {
+
+	uuid, err := exec.Command("uuidgen").Output()
+	if err != nil {
+		fmt.Println("genUUID fail!")
+	}
+	return string(uuid[0:36])
+}
 func main() {
-	fmt.Println("hello")
+	const MAX_DISK_NUM = 128
+	var orig_disks []string
+	var term_disks []string
+
+	for i := 0; i < MAX_DISK_NUM; i++ {
+		var uuid1 string = genUUID()
+		orig_disks = append(orig_disks, uuid1)
+		uuid2 := genUUID()
+		term_disks = append(term_disks, uuid2)
+	}
+
+	//fmt.Println(strings.Join(term_disks, ", "))
 
 	agent := Agent{
 		HostIp:     "10.25.26.46",
 		Hostname:   "agent100",
 		Id:         100,
 		State:      ACTIVE,
-		Orig_vdisk: []string{"5d33e3b0-9e39-4ecc-9847-f3fc7a97b0c5", "47f17840-f800-4881-a8f0-584354ab24b8"},
-		Term_vdisk: []string{"47f17840-f800-4881-a8f0-584354ab24b8", "0e0c92f1-1692-4d48-8af5-bbceae73caa4"},
+		Orig_vdisk: orig_disks,
+		Term_vdisk: term_disks,
 	}
-
-	//fmt.Println(agent)
 
 	b, err := json.Marshal(agent)
 	if nil != err {
