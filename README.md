@@ -8,9 +8,8 @@ mkdir -p $GOPATH/src/github.com/golang
 cd $GOPATH/src/github.com/golang
 git clone git@github.com:golang/net.git
 ```
-Notes:
+Notes & References:
 
-goroutine channel
-https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/02.7.md
+[goroutine channel](https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/02.7.md)
 
-
+[go socket](http://blog.csdn.net/ahlxt123/article/details/47320161)
