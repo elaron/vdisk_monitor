@@ -8,7 +8,8 @@ import (
 	"golang.org/x/net/context"
 )
 
-func updateVdiskInfo() {
+//func updateVdiskInfo() {
+func main() {
 	cfg := client.Config{
 		Endpoints: []string{"http://127.0.0.1:2379"},
 		Transport: client.DefaultTransport,
