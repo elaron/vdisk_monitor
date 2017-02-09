@@ -42,15 +42,15 @@ type BACKUP_STATE int32
 type AgentID 		int32
 type vdiskList 		[]string
 type Agent struct {
-	HostIp string
-	Hostname string
-	Id AgentID
-	State DAEMON_STATE_TYPE
+	HostIp 		string
+	Hostname 	string
+	Id 			AgentID
+	State 		DAEMON_STATE_TYPE
 }
 
 type SyncDaemon struct {
-	SyncType 			SYNC_TYPE
-	Tcp_server_port 	int32
+	SyncType			SYNC_TYPE
+	Tcp_server_port		int32
 	LastWriteSeq		int64
 	State 				DAEMON_STATE_TYPE
 	LastHeartBeatTime	int64
