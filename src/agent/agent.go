@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 )
 
 type RegisterAgentMsg struct {
@@ -13,25 +14,38 @@ type RegisterAgentMsg struct {
 	Id       int32
 }
 
-func sender(conn net.Conn, msg string) {
-	conn.Write([]byte(msg))
-	fmt.Println("send over")
+func heartbeatToMds(conn net.Conn) {
 
-}
-
-func main() {
 	registerAgent := RegisterAgentMsg{
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
 		Id:       100,
 	}
 
-	b, err := json.Marshal(registerAgent)
+	msg, err := json.Marshal(registerAgent)
 	if nil != err {
 		fmt.Println("encode to json fail!")
 	} else {
-		fmt.Println("json-body:", string(b))
+		fmt.Println("json-body:", string(msg))
 	}
+
+	for {
+		conn.Write([]byte(msg))
+		fmt.Println("send over")
+		time.Sleep(5 * time.Second)
+	}
+}
+func sayHi(msg string) {
+	for i := 0; i < 10; i++ {
+		fmt.Println(msg)
+	}
+}
+func main() {
+	go sayHi("world")
+	sayHi("hello")
+}
+
+func connMds() {
 
 	server := "127.0.0.1:8877"
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
@@ -47,6 +61,7 @@ func main() {
 	}
 
 	fmt.Println("connect success")
-	sender(conn, string(b))
+	go heartbeatToMds(conn)
+	fmt.Println("goroutine end")
 
 }
