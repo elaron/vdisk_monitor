@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func main() {
+func setuplistener() {
 	netListen, err := net.Listen("tcp", "localhost:8877")
 	CheckError(err)
 	defer netListen.Close()
@@ -29,9 +29,7 @@ func handleConnection(conn net.Conn) {
 	buffer := make([]byte, 2048)
 
 	for {
-
 		n, err := conn.Read(buffer)
-
 		if err != nil {
 			Log(conn.RemoteAddr().String(), " connection error: ", err)
 			return
@@ -40,7 +38,6 @@ func handleConnection(conn net.Conn) {
 		Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
 
 		buffer = make([]byte, 2048)
-
 	}
 }
 

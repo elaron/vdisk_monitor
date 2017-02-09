@@ -31,6 +31,7 @@ func genUUID() string {
 	}
 	return string(uuid[0:36])
 }
+
 func main() {
 	const MAX_DISK_NUM = 128
 	var orig_disks []string
