@@ -14,38 +14,7 @@ type RegisterAgentMsg struct {
 	Id       int32
 }
 
-func heartbeatToMds(conn net.Conn) {
-
-	registerAgent := RegisterAgentMsg{
-		Hostname: "aaa",
-		Ip:       "192.168.56.104",
-		Id:       100,
-	}
-
-	msg, err := json.Marshal(registerAgent)
-	if nil != err {
-		fmt.Println("encode to json fail!")
-	} else {
-		fmt.Println("json-body:", string(msg))
-	}
-
-	for {
-		conn.Write([]byte(msg))
-		fmt.Println("send over")
-		time.Sleep(5 * time.Second)
-	}
-}
-func sayHi(msg string) {
-	for i := 0; i < 10; i++ {
-		fmt.Println(msg)
-	}
-}
-func main() {
-	go sayHi("world")
-	sayHi("hello")
-}
-
-func connMds() {
+func connectMds() (net.Conn){
 
 	server := "127.0.0.1:8877"
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
@@ -61,7 +30,57 @@ func connMds() {
 	}
 
 	fmt.Println("connect success")
-	go heartbeatToMds(conn)
-	fmt.Println("goroutine end")
+	return conn
+}
 
+func sendMsgToMds() func(string) error{
+	
+	conn := connectMds()
+
+	return func(msg string) error {
+	
+		_,err := conn.Write([]byte(msg))
+
+		if  err != nil {
+			fmt.Println(err.Error())
+		}
+		return err
+	}
+}
+
+func getAgentIdentifyInfo() string {
+	registerAgent := RegisterAgentMsg{
+		Hostname: "aaa",
+		Ip:       "192.168.56.104",
+		Id:       100,
+	}
+
+	msg, err := json.Marshal(registerAgent)
+	if nil != err {
+		fmt.Println("encode to json fail!")
+	} else {
+		fmt.Println("json-body:", string(msg))
+	}
+
+	return string(msg)
+}
+
+func heartbeatToMds(msg string) {
+
+	//info := getAgentIdentifyInfo()
+	sendHbMsg := sendMsgToMds()
+	
+	for {
+		sendHbMsg(msg)
+		fmt.Println(msg)
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func main() {
+	info := getAgentIdentifyInfo()
+	go heartbeatToMds(info)
+	heartbeatToMds("world")
+	//heartbeatToMds()
+	//heartbeatToMds("{'Hostname':'bbb,'Ip':'192.168.56.104','Id':100}")
 }
