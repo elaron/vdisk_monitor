@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 	"time"
-	"runtime"
+	//"runtime"
 )
 
 type RegisterAgentMsg struct {
@@ -66,23 +66,25 @@ func getAgentIdentifyInfo() string {
 	return string(msg)
 }
 
-func heartbeatToMds(msg string) {
+func heartbeatToMds() {
 
-	//info := getAgentIdentifyInfo()
+	info := getAgentIdentifyInfo()
 	sendHbMsg := sendMsgToMds()
 	
 	for {
-		runtime.Gosched()
-		sendHbMsg(msg)
-		fmt.Println(msg)
+		//runtime.Gosched()
+		sendHbMsg(info)
+		fmt.Println(info)
 		time.Sleep(1 * time.Second)
 	}
 }
 
 func main() {
-	info := getAgentIdentifyInfo()
-	go heartbeatToMds(info)
-	heartbeatToMds("world")
-	//heartbeatToMds()
-	//heartbeatToMds("{'Hostname':'bbb,'Ip':'192.168.56.104','Id':100}")
+	
+	go heartbeatToMds()
+	
+	for {
+		
+	}
+	
 }
