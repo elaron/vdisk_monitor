@@ -98,6 +98,8 @@ func isAgentExist(agentList []Agent, agent Agent) bool{
 	return false
 }
 
+//func addAgent(agent Agent) error{}
+
 func isVdiskExistOnAgent(path string){
 
 }
