@@ -20,7 +20,7 @@ func main() {
 		}
 
 		Log(conn.RemoteAddr().String(), " tcp connect success")
-		handleConnection(conn)
+		go handleConnection(conn)
 	}
 }
 
@@ -38,6 +38,8 @@ func handleConnection(conn net.Conn) {
 		}
 
 		Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
+
+		buffer = make([]byte, 2048)
 
 	}
 }

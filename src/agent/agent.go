@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"time"
+	"runtime"
 )
 
 type RegisterAgentMsg struct {
@@ -71,6 +72,7 @@ func heartbeatToMds(msg string) {
 	sendHbMsg := sendMsgToMds()
 	
 	for {
+		runtime.Gosched()
 		sendHbMsg(msg)
 		fmt.Println(msg)
 		time.Sleep(1 * time.Second)
