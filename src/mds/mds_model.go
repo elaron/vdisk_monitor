@@ -21,7 +21,7 @@ const (
 	MIGRATE
 	VM_STATE_TYPE_BUTT
 )
-type VM_STATE 		int32
+type VM_STATE int32
 
 const (
 	ORIGINATOR = iota
@@ -42,10 +42,10 @@ type BACKUP_STATE int32
 type AgentID 		int32
 type vdiskList 		[]string
 type Agent struct {
-	HostIp     			string
-	Hostname   			string
-	Id         			AgentID
-	State      			DAEMON_STATE_TYPE
+	HostIp string
+	Hostname string
+	Id AgentID
+	State DAEMON_STATE_TYPE
 }
 
 type SyncDaemon struct {
