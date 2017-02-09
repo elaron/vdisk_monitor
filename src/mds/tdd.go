@@ -69,4 +69,6 @@ func main() {
 		fmt.Println("case1_findExistedAgent PASS")
 	}
 
+	etcdClient()
+
 }

@@ -3,13 +3,14 @@ package main
 import (
 	"log"
 	"time"
+	"fmt"
 
 	"github.com/coreos/etcd/client"
 	"golang.org/x/net/context"
 )
 
 //func updateVdiskInfo() {
-func main() {
+func etcdClient() {
 	cfg := client.Config{
 		Endpoints: []string{"http://127.0.0.1:2379"},
 		Transport: client.DefaultTransport,
@@ -19,6 +20,7 @@ func main() {
 	c, err := client.New(cfg)
 	if err != nil {
 		log.Fatal(err)
+		fmt.Println("new client faile", err.Error())
 	}
 	kapi := client.NewKeysAPI(c)
 	// set "/foo" key with "bar" value
@@ -26,15 +28,17 @@ func main() {
 	resp, err := kapi.Set(context.Background(), "/foo", "bar", nil)
 	if err != nil {
 		log.Fatal(err)
+		fmt.Println("set key fail", err.Error())
 	} else {
 		// print common key info
 		log.Printf("Set is done. Metadata is %q\n", resp)
 	}
 	// get "/foo" key's value
 	log.Print("Getting '/foo' key value")
-	resp, err = kapi.Get(context.Background(), "/agent/100", nil)
+	resp, err = kapi.Get(context.Background(), "/foo", nil)
 	if err != nil {
 		log.Fatal(err)
+		fmt.Println("get key fail", err.Error())
 	} else {
 		// print common key info
 		log.Printf("Get is done. Metadata is %q\n", resp)

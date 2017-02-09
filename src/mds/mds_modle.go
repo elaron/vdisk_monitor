@@ -6,21 +6,71 @@ import (
 	//"strings"
 )
 
+//define enums
 const (
 	ACTIVE = iota
 	LOSS_CONN
-	STATE_TYPE_BUTT
+	DAEMON_STATE_TYPE_BUTT
 )
+type DAEMON_STATE_TYPE int32
 
-type AGENT_STATE int32
-type vdiskList []string
+const (
+	RUNNING = iota
+	PAUSE
+	STOP
+	MIGRATE
+	VM_STATE_TYPE_BUTT
+)
+type VM_STATE 		int32
 
+const (
+	ORIGINATOR = iota
+	TERMINATOR
+	SYNC_TYPE_BUTT
+)
+type SYNC_TYPE int32
+
+const (
+	NORMAL_SYNC = iota
+	INCREASE_SYNC
+	FULL_SYNC
+	BACKUP_STATE_BUTT
+)
+type BACKUP_STATE int32
+
+//define basic structure
+type AgentID 		int32
+type vdiskList 		[]string
 type Agent struct {
-	HostIp     string
-	Hostname   string
-	Id         int32
-	State      AGENT_STATE
+	HostIp     			string
+	Hostname   			string
+	Id         			AgentID
+	State      			DAEMON_STATE_TYPE
 }
+
+type SyncDaemon struct {
+	SyncType 			SYNC_TYPE
+	Tcp_server_port 	int32
+	LastWriteSeq		int64
+	State 				DAEMON_STATE_TYPE
+	LastHeartBeatTime	int64
+}
+
+type VdiskBackup struct {
+	ResidentAgentID 	AgentID
+	Path 				string
+	Size 				int64
+	BackupStatus 		BACKUP_STATE
+	SyncPercent 		int32
+	SyncDaemonInfo		SyncDaemon
+}
+
+type Vdisk struct {
+	Id 					string
+	VmId 				string
+	Vmstate 			VM_STATE
+	Backups 			[]VdiskBackup
+ }
 
 func genUUID() string {
 
@@ -46,5 +96,9 @@ func isAgentExist(agentList []Agent, agent Agent) bool{
 		}
 	}
 	return false
+}
+
+func isVdiskExistOnAgent(path string){
+
 }
 
