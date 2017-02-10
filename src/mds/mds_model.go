@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os/exec"
-	//"strings"
 )
 
 //define enums
@@ -39,7 +38,6 @@ const (
 type BACKUP_STATE int32
 
 //define basic structure
-type vdiskList 		[]string
 type AgentBasicInfo struct {
 	HostIp 		string
 	Hostname 	string
@@ -49,8 +47,8 @@ type AgentBasicInfo struct {
 
 type Agent struct {
 	BasicInfo 		AgentBasicInfo
-	Primary_vdisks 	vdiskList
-	Secondary_vdisks vdiskList
+	Primary_vdisks 	[]string
+	Secondary_vdisks []string
 }
 
 type SyncDaemon struct {

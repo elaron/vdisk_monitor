@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"bytes"
+	"reflect"
 )
 
 func case1_findExistedAgent() (bool, string){
@@ -126,6 +127,11 @@ func case3_AgentCRUD() (bool, string) {
 	agentTest, err := getAgent(100)
 	if err != nil {
 		return false, "Get agent fail"
+	}
+
+	if false == reflect.DeepEqual(agentTest, agent) {
+		fmt.Printf("Set agent:%s \nget agent:%s\n", agent, agentTest)
+		return false, "Get agent fail, different with seted agent"
 	}
 
 	fmt.Println(agentTest)
