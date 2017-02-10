@@ -39,13 +39,18 @@ const (
 type BACKUP_STATE int32
 
 //define basic structure
-type AgentID 		int32
 type vdiskList 		[]string
-type Agent struct {
+type AgentBasicInfo struct {
 	HostIp 		string
 	Hostname 	string
-	Id 			AgentID
+	Id 			int32
 	State 		DAEMON_STATE_TYPE
+}
+
+type Agent struct {
+	BasicInfo 		AgentBasicInfo
+	Primary_vdisks 	vdiskList
+	Secondary_vdisks vdiskList
 }
 
 type SyncDaemon struct {
@@ -57,7 +62,7 @@ type SyncDaemon struct {
 }
 
 type VdiskBackup struct {
-	ResidentAgentID 	AgentID
+	ResidentAgentID 	int32
 	Path 				string
 	Size 				int64
 	BackupStatus 		BACKUP_STATE
@@ -85,12 +90,10 @@ func isAgentExist(agentList []Agent, agent Agent) bool{
 
 	for _, item := range agentList {
 
-		if agent.HostIp == item.HostIp {
-			fmt.Println("HostIp exist", item.HostIp)
+		if agent.BasicInfo.HostIp == item.BasicInfo.HostIp {
 			return true
 
-		}else if agent.Id == item.Id {
-			fmt.Println("agentID exist:", item.Id)
+		}else if agent.BasicInfo.Id == item.BasicInfo.Id {
 			return true
 
 		}

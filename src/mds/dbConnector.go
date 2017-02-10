@@ -1,95 +1,79 @@
 package main
-
+	
 import (
-	"log"
-	"time"
 	"fmt"
-
-	"github.com/coreos/etcd/client"
-	"golang.org/x/net/context"
+	"encoding/json"
+	"bytes"
+	"strconv"
 )
 
-func getKeysAPI () client.KeysAPI{
-	
-	cfg := client.Config{
-	
-		Endpoints: []string{"http://127.0.0.1:2379"},
-		Transport: client.DefaultTransport,
-		// set timeout per request to fail fast when the target endpoint is unavailable
-		HeaderTimeoutPerRequest: time.Second,
-	}
+func formatInt32(n int32) string {
+    return strconv.FormatInt(int64(n), 10)
+}
 
-	c, err := client.New(cfg)
-	
+//Agent CRUD
+func addAgent(agent Agent) error{
+
+	b, err := json.Marshal(agent.BasicInfo)
+
+	if nil != err {
+		fmt.Println("encode to json fail!")
+	} 
+
+	key := bytes.Buffer{}
+
+	key.WriteString("/agents/")
+	key.WriteString(formatInt32(agent.BasicInfo.Id))
+	key.WriteString("/BasicInfo")
+
+	addNewAgent := createKey()
+	err = addNewAgent(key.String(), string(b))
 	if err != nil {
-		log.Fatal(err)
-		fmt.Println("new client faile", err.Error())
+		fmt.Println("Add agent fail")
 	}
+
+	return err
+}
+
+func deleteAgent(agentID int32) error {
 	
-	kapi := client.NewKeysAPI(c)
-
-	return kapi
-}
-
-func setKey() func(key string, value string) error{
+	deleteAgentOp := deleteDirectory()
 	
-	keyApi := getKeysAPI()
+	key := bytes.Buffer{}
 
-	return func (key string, value string) error {
+	key.WriteString("/agents/")
+	key.WriteString(formatInt32(agentID))
 
-		resp, err := keyApi.Set(context.Background(), key, value, nil)
-		
-		if err != nil {
-			log.Fatal(err)
-			fmt.Println("set key fail", err.Error())
-		
-		} else {
-			// print common key info
-			log.Printf("Set is done. Metadata is %q\n", resp)
-		}
+	err := deleteAgentOp(key.String())
+	if err != nil {
+	 	fmt.Println("Delete agent fail")
+	 }
 
-		return err
-	}
+	 return err
 }
 
-func getKey() func(key string) (string, error){
+func getAgent(agentID int32) (Agent, error) {
 	
-	keyApi := getKeysAPI()
+	getAgentInfo := getKey()
 
-	return func (key string) (string, error) {
+	key := bytes.Buffer{}
 
-		resp, err := keyApi.Get(context.Background(), key, nil)
+	key.WriteString("/agents/")
+	key.WriteString(formatInt32(agentID))
+	key.WriteString("/BasicInfo")
 
-		if err != nil {
-			log.Fatal(err)
-			fmt.Println("get key fail", err.Error())
-
-		} else {
-			log.Printf("Get is done. Metadata is %q\n", resp)
-			log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
-		}
-
-		return string(resp.Node.Value), err
+	value, err := getAgentInfo(key.String())
+	if err != nil {
+		fmt.Println("Get agent fail", err.Error())
+		return Agent{}, err
 	}
+
+	var agent Agent
+	err = json.Unmarshal([]byte(value), &agent.BasicInfo)
+
+	fmt.Println(agent)
+
+	return agent, err
 }
 
-func deleteKey() func(key string) error{
-	//Delete(ctx context.Context, key string, opts *DeleteOptions) (*Response, error)
-
-	keyApi := getKeysAPI()
-
-	return func (key string) error {
-		
-		resp, err := keyApi.Delete(context.Background(), key, nil)
-
-		if err != nil {
-			log.Fatal(err)
-			fmt.Println("Delete key fail, ", err.Error())
-		
-		}else{
-			log.Printf("Delete is done, Metadata is %q\n", resp)
-		}
-
-		return err
-	}
-}
+//vdisk CRUD
