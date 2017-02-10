@@ -17,3 +17,5 @@ Notes & References:
 # 编译到 linux 64bit
 $ GOOS=linux GOARCH=amd64 go build
 
+GDB GO
+go build -ldflags "-w"

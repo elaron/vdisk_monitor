@@ -115,7 +115,7 @@ func getKey() func(key string) (string, error){
 		resp, err := keyApi.Get(context.Background(), key, nil)
 		
 		if err != nil {
-			log.Fatal(err)
+			//log.Fatal(err)
 			fmt.Println("get key fail", err.Error())
 
 		}/*else {
@@ -142,7 +142,7 @@ func deleteDirectory() func (key string) error{
 		_, err := keyApi.Delete(context.Background(), key, opt)
 
 		if err != nil {
-			log.Fatal(err)
+			//log.Fatal(err)
 			fmt.Println("Delete directory fail, ", err.Error())
 		
 		}
