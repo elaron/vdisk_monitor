@@ -9,7 +9,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func setKey() func(key string, value string) error{
+func getKeysAPI () client.KeysAPI{
 	
 	cfg := client.Config{
 	
@@ -28,9 +28,16 @@ func setKey() func(key string, value string) error{
 	
 	kapi := client.NewKeysAPI(c)
 
+	return kapi
+}
+
+func setKey() func(key string, value string) error{
+	
+	keyApi := getKeysAPI()
+
 	return func (key string, value string) error {
 
-		resp, err := kapi.Set(context.Background(), key, value, nil)
+		resp, err := keyApi.Set(context.Background(), key, value, nil)
 		
 		if err != nil {
 			log.Fatal(err)
@@ -45,29 +52,13 @@ func setKey() func(key string, value string) error{
 	}
 }
 
-
 func getKey() func(key string) (string, error){
 	
-	cfg := client.Config{
-	
-		Endpoints: []string{"http://127.0.0.1:2379"},
-		Transport: client.DefaultTransport,
-		// set timeout per request to fail fast when the target endpoint is unavailable
-		HeaderTimeoutPerRequest: time.Second,
-	}
-
-	c, err := client.New(cfg)
-	
-	if err != nil {
-		log.Fatal(err)
-		fmt.Println("new client faile", err.Error())
-	}
-	
-	kapi := client.NewKeysAPI(c)
+	keyApi := getKeysAPI()
 
 	return func (key string) (string, error) {
 
-		resp, err := kapi.Get(context.Background(), key, nil)
+		resp, err := keyApi.Get(context.Background(), key, nil)
 
 		if err != nil {
 			log.Fatal(err)
@@ -79,5 +70,26 @@ func getKey() func(key string) (string, error){
 		}
 
 		return string(resp.Node.Value), err
+	}
+}
+
+func deleteKey() func(key string) error{
+	//Delete(ctx context.Context, key string, opts *DeleteOptions) (*Response, error)
+
+	keyApi := getKeysAPI()
+
+	return func (key string) error {
+		
+		resp, err := keyApi.Delete(context.Background(), key, nil)
+
+		if err != nil {
+			log.Fatal(err)
+			fmt.Println("Delete key fail, ", err.Error())
+		
+		}else{
+			log.Printf("Delete is done, Metadata is %q\n", resp)
+		}
+
+		return err
 	}
 }

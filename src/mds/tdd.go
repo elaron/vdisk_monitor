@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"bytes"
 )
 
 func case1_findExistedAgent() (bool, string){
@@ -63,12 +64,38 @@ func case1_findExistedAgent() (bool, string){
 func main() {
 	
 	rslt, failReason := case1_findExistedAgent()
+
 	if rslt != true {
 		fmt.Println("case1_findExistedAgent Fail! failReason:", failReason)
 	}else{
 		fmt.Println("case1_findExistedAgent PASS")
 	}
 
-	etcdClient()
+	setEtcdValue, getEtcdValue, deleteEtcdValue := setKey(), getKey(), deleteKey()
+
+	uuid := genUUID()
+	
+	key := bytes.Buffer{}
+	key.WriteString(uuid)
+	key.WriteString("elar")
+
+	err := setEtcdValue(key.String(), "Hi, nice to see you")
+	if err != nil {
+		fmt.Println("set key fail!")
+	
+	}else{
+		value, err := getEtcdValue(key.String())
+		if err != nil{
+			fmt.Println("get key fail")
+		
+		}else{
+			fmt.Println("get value success", value)
+		}
+
+		err = deleteEtcdValue(key.String())
+		if err != nil {
+			fmt.Println("delete key fail")
+		}
+	}
 
 }

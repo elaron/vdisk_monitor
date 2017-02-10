@@ -13,3 +13,7 @@ Notes & References:
 [goroutine channel](https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/02.7.md)
 
 [go socket](http://blog.csdn.net/ahlxt123/article/details/47320161)
+
+# 编译到 linux 64bit
+$ GOOS=linux GOARCH=amd64 go build
+
