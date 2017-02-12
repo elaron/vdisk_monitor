@@ -129,28 +129,24 @@ func getAgent(agentID int32) (Agent, error) {
 
 	var value [AGGENT_SUB_NODE_TYPE_BUTT]string
 	var err error
-	for i, path := range subNodePaths {
 	
-		value[i], err = getAgentNodeValueFunc(path)
-		if err != nil {
-			fmt.Printf("Get agent subNode fail( err:%s ). NodeKey:%s", err.Error(), path)
-			return Agent{}, err
-		}
-		fmt.Printf("Value[%d]:%s\n", i, value[i])
+	for i, path := range subNodePaths {
+		value[i], _ = getAgentNodeValueFunc(path)
+		//fmt.Printf("Value[%d]:%s\n", i, value[i])	//just for debug
 	}
 
 	var agent Agent
-	var errs []error
+	var errs [AGGENT_SUB_NODE_TYPE_BUTT]error 
 
-	if 0 == len(value[AGENT_BASIC_INFO]) {
-		errs[AGENT_BASIC_INFO] = json.Unmarshal([]byte(value[AGENT_BASIC_INFO]), &agent.BasicInfo)	
+	if 0 != len(value[AGENT_BASIC_INFO]) {
+		errs[AGENT_BASIC_INFO] = json.Unmarshal([]byte(value[AGENT_BASIC_INFO]), &agent.BasicInfo)
 	}
 
-	if 0 == len(value[AGENT_PRIMARY_VDISKS]) {
+	if 0 != len(value[AGENT_PRIMARY_VDISKS]) {
 		errs[AGENT_PRIMARY_VDISKS] = json.Unmarshal([]byte(value[AGENT_PRIMARY_VDISKS]), &agent.Primary_vdisks)	
 	}
 
-	if 0 == len(value[AGENT_SECONDARY_VDISKS]) {
+	if 0 != len(value[AGENT_SECONDARY_VDISKS]) {
 		errs[AGENT_SECONDARY_VDISKS] = json.Unmarshal([]byte(value[AGENT_SECONDARY_VDISKS]), &agent.Secondary_vdisks)
 	}
 
