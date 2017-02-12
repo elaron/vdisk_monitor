@@ -128,8 +128,7 @@ func getAgent(agentID int32) (Agent, error) {
 	subNodePaths := getAgentSubNodesPaths(agentID)
 
 	var value [AGGENT_SUB_NODE_TYPE_BUTT]string
-	var err error
-	
+
 	for i, path := range subNodePaths {
 		value[i], _ = getAgentNodeValueFunc(path)
 		//fmt.Printf("Value[%d]:%s\n", i, value[i])	//just for debug
@@ -159,7 +158,7 @@ func getAgent(agentID int32) (Agent, error) {
 
 	fmt.Println(agent)
 
-	return agent, err
+	return agent, nil
 }
 
 //vdisk CRUD
