@@ -151,7 +151,7 @@ func deleteDirectory() func (key string) error{
 	}
 }
 
-func getDirectory() (func (key string) (string, error)) {
+func getDirectory() (func (key string) ([]string, error)) {
 	
 	keyApi := getKeysAPI()
 
@@ -161,16 +161,29 @@ func getDirectory() (func (key string) (string, error)) {
 		Quorum : true,
 	}
 
-	return func (key string) (string, error) {
+	return func (key string) ([]string, error) {
+
+		var values []string
 		
 		resp, err := keyApi.Get(context.Background(), key, opt)
+		
 		if nil != err {
 			fmt.Println("Get directory fail, err: ", err.Error())
 
 		}else{
-			fmt.Printf("Get resp:%q\nkey:%q value:%q\n", resp, resp.Node.Key, resp.Node.Value)
+			if resp.Node.Dir != true {
+				values = append(values, string(resp.Node.Value))
+
+			}else{
+								
+				for _,node := range resp.Node.Nodes {
+				
+					//fmt.Printf("%d key:%s value:%s\n", i, node.Key, node.Value)
+					values = append(values, string(node.Key))
+				}
+			}
 		}
 
-		return string(resp.Node.Value), err
+		return values, err
 	}
 }

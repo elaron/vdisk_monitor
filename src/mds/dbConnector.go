@@ -169,7 +169,7 @@ func getAgent(agentID int32) (Agent, error) {
 	return agent, nil
 }
 
-func getAgentList() (string,error){
+func getAgentList() ([]string, error){
 	
 	getAgentListFunc := getDirectory()
 

@@ -124,22 +124,23 @@ func compareAgent(srcAgent Agent, agentID int32) (bool, string){
 
 func case3_AgentCRUD() (bool, string) {
 
+	var agentID int32 = 101
 	agent := Agent{
 		BasicInfo: AgentBasicInfo {
 			HostIp:     "10.25.26.46",
 			Hostname:   "agent100",
-			Id:         100,
+			Id:         agentID,
 		},
 	}
 
-	deleteAgent(100)
+	deleteAgent(agentID)
 
 	err := addAgent(agent)
 	if err != nil {
 		return false, "Add agent fail!!!!"
 	}
 
-	rslt, msg := compareAgent(agent, 100)
+	rslt, msg := compareAgent(agent, agentID)
 	if false ==  rslt{
 		return rslt, msg
 	}
@@ -152,7 +153,7 @@ func case3_AgentCRUD() (bool, string) {
 		return false, "Update agent fail"
 	}
 
-	rslt, msg = compareAgent(agent, 100)
+	rslt, msg = compareAgent(agent, agentID)
 	if false ==  rslt{
 		return rslt, msg
 	}
