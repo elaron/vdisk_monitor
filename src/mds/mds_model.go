@@ -84,24 +84,38 @@ func genUUID() string {
 	return string(uuid[0:36])
 }
 
-func isAgentExist(agentList []Agent, agent Agent) bool{
+func isAgentExist(agentList []Agent, agent Agent) (bool, string){
 
 	for _, item := range agentList {
 
 		if agent.BasicInfo.HostIp == item.BasicInfo.HostIp {
-			return true
+			return true, "Duplicate agent IP"
 
 		}else if agent.BasicInfo.Id == item.BasicInfo.Id {
-			return true
+			return true, "Duplicate agent ID"
 
 		}
 	}
-	return false
+	return false, ""
 }
 
-//func addAgent(agent Agent) error{}
+func addAgent(agent Agent) (bool, string){
+
+	agentList, err := getAgentList()
+
+	agentExist, errMsg := isAgentExist(agentList, agent)
+	if true == agentExist {
+		return false, errMsg
+	}
+
+	err = createAgent(agent)
+	if nil != err {
+		return false, "Add agent fail"
+	}
+
+	return true, ""
+}
 
 func isVdiskExistOnAgent(path string){
 
 }
-

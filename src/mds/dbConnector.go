@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"encoding/json"
 	"bytes"
+	"strings"
 	"strconv"
 )
 
@@ -109,7 +110,7 @@ func setAgent(f func() (func(key string, value string) error), agent Agent) erro
 	return nil
 }
 
-func addAgent(agent Agent) error {
+func createAgent(agent Agent) error {
 	
 	return setAgent(createKey, agent)
 }
@@ -169,17 +170,34 @@ func getAgent(agentID int32) (Agent, error) {
 	return agent, nil
 }
 
-func getAgentList() ([]string, error){
+func getAgentList() ([]Agent, error){
 	
 	getAgentListFunc := getDirectory()
 
-	value, err := getAgentListFunc("/agents")
+	agentKeyPaths, err := getAgentListFunc("/agents")
 	if nil != err {
 		fmt.Println("Get agent list fail! Err:", err.Error())
 	}
 
-	fmt.Println("AgentList:", value)
+	var agentList []Agent
 
-	return value, err
+	for _, path := range agentKeyPaths{
+	
+		subStrs := strings.Split(path, "/")
+
+		agentID, err := strconv.ParseInt(subStrs[len(subStrs) - 1], 10, 32)
+		if err != nil {
+    		continue
+		}
+
+		agent,err := getAgent(int32(agentID))
+		if nil != err {
+			continue
+		}
+
+		agentList = append(agentList, agent)
+	}
+
+	return agentList, err
 }
 //vdisk CRUD

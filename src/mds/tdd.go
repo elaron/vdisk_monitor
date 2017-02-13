@@ -6,69 +6,7 @@ import (
 	"reflect"
 )
 
-func case1_findExistedAgent() (bool, string){
-
-	//create agentList
-	var agentList []Agent
-
-	agent1  := Agent{
-		BasicInfo: AgentBasicInfo {
-			HostIp:     "10.25.26.46",
-			Hostname:   "aaa",
-			Id:         100,
-			State:      ACTIVE,	
-		},
-	}
-
-	agent2  := Agent{
-		BasicInfo: AgentBasicInfo {
-			HostIp:     "10.25.26.46",
-			Hostname:   "bbb",
-			Id:         101,
-			State:      ACTIVE,
-		},
-	}
-
-	agentList = append(agentList, agent1)
-	agentList = append(agentList, agent2)
-
-	var agentTest Agent
-	var rslt bool
-
-	//test duplicate agentID
-	agentTest = Agent{
-		BasicInfo: AgentBasicInfo {
-			HostIp:     "192.25.26.46",
-			Hostname:   "lalalala",
-			Id:         100,
-			State:      ACTIVE,
-		},
-	}
-
-	rslt = isAgentExist(agentList, agentTest)
-	if rslt != true {
-		return false, "duplicate agentID"
-	}
-
-	//test duplicate IP
-	agentTest = Agent{
-		BasicInfo: AgentBasicInfo {
-			HostIp:     "10.25.26.46",
-			Hostname:   "lulululu",
-			Id:         200,
-			State:      ACTIVE,
-		},
-	}
-
-	rslt = isAgentExist(agentList, agentTest)
-	if rslt != true {
-		return false, "duplicate hostIP"
-	}
-
-	return true, ""
-}
-
-func case2_EtcdCRUD() (bool, string) {
+func case1_EtcdCRUD() (bool, string) {
 
 	createEtcdValue, deleteEtcdValue, updateEtcdValue, getEtcdValue := createKey(), deleteKey(), updateKey(), getKey()
 
@@ -122,7 +60,7 @@ func compareAgent(srcAgent Agent, agentID int32) (bool, string){
 	return true, ""
 }
 
-func case3_AgentCRUD() (bool, string) {
+func case2_AgentCRUD() (bool, string) {
 
 	var agentID int32 = 101
 	agent := Agent{
@@ -135,7 +73,7 @@ func case3_AgentCRUD() (bool, string) {
 
 	deleteAgent(agentID)
 
-	err := addAgent(agent)
+	err := createAgent(agent)
 	if err != nil {
 		return false, "Add agent fail!!!!"
 	}
@@ -161,12 +99,38 @@ func case3_AgentCRUD() (bool, string) {
 	return true, ""
 }
 
-func case4_GetAgentList() (bool, string) {
+func case3_addAgent() (bool, string) {
 
-	_,err := getAgentList()
+	var agentID int32 = 101
+	agent := Agent{
+		BasicInfo: AgentBasicInfo {
+			HostIp:     "10.25.26.46",
+			Hostname:   "agent100",
+			Id:         agentID,
+		},
+	}
 
-	if err != nil {
-		return false, "Get agent list fail"
+	deleteAgent(101)
+	deleteAgent(100)
+
+	rslt, errMsg := addAgent(agent)
+	
+	if rslt != true {
+		fmt.Println("Add agent fail, err:", errMsg)
+		return false, "Add agent fail!"
+	}
+
+	agent.BasicInfo.Id = 102
+	rslt, _ = addAgent(agent)
+	if rslt != false {
+		return false, "Detect duplicate AgentIP fail!"
+	}
+
+	agent.BasicInfo.Id = 101
+	agent.BasicInfo.HostIp = "10.25.26.47"
+	rslt, _ = addAgent(agent)
+	if rslt != false {
+		return false, "Detect duplicate AgentID fail!"
 	}
 
 	return true, ""
@@ -174,34 +138,26 @@ func case4_GetAgentList() (bool, string) {
 
 func main() {
 	
-	rslt, errMsg := case1_findExistedAgent()
+	rslt, errMsg := case1_EtcdCRUD()
 	if false == rslt {
-		fmt.Println("case1_findExistedAgent --- Fail, errMsg: ", errMsg)
+		fmt.Println("case1_EtcdCRUD --- Fail, errMsg: ", errMsg)
 	}else{
-		fmt.Println("case1_findExistedAgent --- Pass")	
+		fmt.Println("case1_EtcdCRUD --- Pass")	
 	}
 	
 
-	rslt, errMsg = case2_EtcdCRUD()
+	rslt, errMsg = case2_AgentCRUD()
 	if false == rslt {
-		fmt.Println("case2_EtcdCRUD --- Fail, errMsg: ", errMsg)
+		fmt.Println("case2_AgentCRUD --- Fail, errMsg: ", errMsg)
 	}else{
-		fmt.Println("case2_EtcdCRUD --- Pass")	
-	}
-	
-
-	rslt, errMsg = case3_AgentCRUD()
-	if false == rslt {
-		fmt.Println("case3_AgentCRUD --- Fail, errMsg: ", errMsg)
-	}else{
-		fmt.Println("case3_AgentCRUD --- Pass")	
+		fmt.Println("case2_AgentCRUD --- Pass")	
 	}
 
-	rslt, errMsg = case4_GetAgentList()
+	rslt, errMsg = case3_addAgent()
 	if false == rslt {
-		fmt.Println("case4_GetAgentList --- Fail, errMsg: ", errMsg)
+		fmt.Println("case3_GetAgentList --- Fail, errMsg: ", errMsg)
 	}else{
-		fmt.Println("case4_GetAgentList --- Pass")	
+		fmt.Println("case3_GetAgentList --- Pass")	
 	}
 	
 }
