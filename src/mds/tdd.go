@@ -107,6 +107,21 @@ func case2_EtcdCRUD() (bool, string) {
 	return true, ""
 }
 
+func compareAgent(srcAgent Agent, agentID int32) (bool, string){
+	
+	agentTest, err := getAgent(agentID)
+	if err != nil {
+		return false, "Get agent fail"
+	}
+
+	if false == reflect.DeepEqual(agentTest, srcAgent) {
+		fmt.Printf("Set agent:%s \nget agent:%s\n", srcAgent, agentTest)
+		return false, "Get agent fail, different with seted agent"
+	}
+
+	return true, ""
+}
+
 func case3_AgentCRUD() (bool, string) {
 
 	agent := Agent{
@@ -124,17 +139,35 @@ func case3_AgentCRUD() (bool, string) {
 		return false, "Add agent fail!!!!"
 	}
 
-	agentTest, err := getAgent(100)
+	rslt, msg := compareAgent(agent, 100)
+	if false ==  rslt{
+		return rslt, msg
+	}
+	
+	agent.BasicInfo.State = LOSS_CONN
+
+	err = updateAgent(agent)
+	if nil != err {
+		fmt.Printf("Update agent fail! Err:%s", err.Error())
+		return false, "Update agent fail"
+	}
+
+	rslt, msg = compareAgent(agent, 100)
+	if false ==  rslt{
+		return rslt, msg
+	}
+
+	return true, ""
+}
+
+func case4_GetAgentList() (bool, string) {
+
+	_,err := getAgentList()
+
 	if err != nil {
-		return false, "Get agent fail"
+		return false, "Get agent list fail"
 	}
 
-	if false == reflect.DeepEqual(agentTest, agent) {
-		fmt.Printf("Set agent:%s \nget agent:%s\n", agent, agentTest)
-		return false, "Get agent fail, different with seted agent"
-	}
-
-	fmt.Println(agentTest)
 	return true, ""
 }
 
@@ -161,6 +194,13 @@ func main() {
 		fmt.Println("case3_AgentCRUD --- Fail, errMsg: ", errMsg)
 	}else{
 		fmt.Println("case3_AgentCRUD --- Pass")	
+	}
+
+	rslt, errMsg = case4_GetAgentList()
+	if false == rslt {
+		fmt.Println("case4_GetAgentList --- Fail, errMsg: ", errMsg)
+	}else{
+		fmt.Println("case4_GetAgentList --- Pass")	
 	}
 	
 }

@@ -85,7 +85,7 @@ func  getAgentSubNodeValues(agent Agent) ([AGGENT_SUB_NODE_TYPE_BUTT]string, err
 	return subNodeValues, nil
 }
 
-func addAgent(agent Agent) error {
+func setAgent(f func() (func(key string, value string) error), agent Agent) error{
 	
 	nodeValues, err := getAgentSubNodeValues(agent)
 	if err != nil {
@@ -95,18 +95,28 @@ func addAgent(agent Agent) error {
 
 	nodeNames 		:= getAgentSubNodeNames()	
 	subNodePaths 	:= getAgentSubNodesPaths(agent.BasicInfo.Id)	
-	addAgentFunc 	:= createKey()
+	addAgentFunc 	:= f()
 
 	for i, name := range nodeNames {
-
+	
 		errMsg := addAgentFunc(subNodePaths[i], nodeValues[i])
 		if errMsg != nil {
-			fmt.Printf("Add agent's %s fail. Key:%s Value:%s", name, subNodePaths[i], nodeValues[i])
+			fmt.Printf("Set agent's %s fail. Key:%s Value:%s", name, subNodePaths[i], nodeValues[i])
 			return errMsg
 		}
 	}
 
 	return nil
+}
+
+func addAgent(agent Agent) error {
+	
+	return setAgent(createKey, agent)
+}
+
+func updateAgent(agent Agent) error{
+
+	return setAgent(updateKey, agent)
 }
 
 func deleteAgent(agentID int32) error {
@@ -156,9 +166,20 @@ func getAgent(agentID int32) (Agent, error) {
 		}
 	}
 
-	fmt.Println(agent)
-
 	return agent, nil
 }
 
+func getAgentList() (string,error){
+	
+	getAgentListFunc := getDirectory()
+
+	value, err := getAgentListFunc("/agents")
+	if nil != err {
+		fmt.Println("Get agent list fail! Err:", err.Error())
+	}
+
+	fmt.Println("AgentList:", value)
+
+	return value, err
+}
 //vdisk CRUD

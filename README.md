@@ -14,8 +14,13 @@ Notes & References:
 
 [go socket](http://blog.csdn.net/ahlxt123/article/details/47320161)
 
+[etcdctl README](https://github.com/coreos/etcd/blob/master/etcdctl/READMEv2.md)
+
+[etcd client](https://github.com/coreos/etcd/tree/master/client)
+
 # 编译到 linux 64bit
 $ GOOS=linux GOARCH=amd64 go build
 
-GDB GO
+# GDB GO
 go build -ldflags "-w"
+

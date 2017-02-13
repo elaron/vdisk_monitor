@@ -151,3 +151,26 @@ func deleteDirectory() func (key string) error{
 	}
 }
 
+func getDirectory() (func (key string) (string, error)) {
+	
+	keyApi := getKeysAPI()
+
+	opt := &client.GetOptions{
+		Recursive : true,
+		Sort : true,
+		Quorum : true,
+	}
+
+	return func (key string) (string, error) {
+		
+		resp, err := keyApi.Get(context.Background(), key, opt)
+		if nil != err {
+			fmt.Println("Get directory fail, err: ", err.Error())
+
+		}else{
+			fmt.Printf("Get resp:%q\nkey:%q value:%q\n", resp, resp.Node.Key, resp.Node.Value)
+		}
+
+		return string(resp.Node.Value), err
+	}
+}
