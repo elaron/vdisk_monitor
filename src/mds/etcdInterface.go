@@ -117,6 +117,7 @@ func getKey() func(key string) (string, error){
 		if err != nil {
 			//log.Fatal(err)
 			fmt.Println("get key fail", err.Error())
+			return "", err
 
 		}/*else {
 			log.Printf("Get is done. Metadata is %q\n", resp)

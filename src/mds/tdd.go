@@ -101,17 +101,16 @@ func case2_AgentCRUD() (bool, string) {
 
 func case3_addAgent() (bool, string) {
 
-	var agentID int32 = 101
 	agent := Agent{
 		BasicInfo: AgentBasicInfo {
 			HostIp:     "10.25.26.46",
 			Hostname:   "agent100",
-			Id:         agentID,
+			Id:         101,
 		},
 	}
 
 	deleteAllAgents()
-	
+
 	rslt, errMsg := addAgent(agent)
 	
 	if rslt != true {
@@ -135,8 +134,44 @@ func case3_addAgent() (bool, string) {
 	return true, ""
 }
 
-func main() {
+func case4_removeAgent() (bool, string){
 	
+	agent := Agent{
+		BasicInfo: AgentBasicInfo {
+			HostIp:     "10.25.26.46",
+			Hostname:   "agent100",
+			Id:         101,
+		},
+	}
+
+	fmt.Println("here 1")
+	deleteAllAgents()
+
+	fmt.Println("here 2")
+	rslt, errMsg := addAgent(agent)
+	
+	if rslt != true {
+		fmt.Println("Add agent fail, err:", errMsg)
+		return false, "Add agent fail!"
+	}
+
+	fmt.Println("here 3")
+	rslt, errMsg = removeAgent(102)
+	if false != rslt {
+		return false, "Fail of detect non-exist agent"
+	}
+
+	fmt.Println("here 4")
+	rslt, errMsg = removeAgent(101)
+	if true != rslt {
+		return false, "Fail of removing agent"
+	}
+
+	return true, ""
+}
+
+func main() {
+	/*
 	rslt, errMsg := case1_EtcdCRUD()
 	if false == rslt {
 		fmt.Println("case1_EtcdCRUD --- Fail, errMsg: ", errMsg)
@@ -157,6 +192,13 @@ func main() {
 		fmt.Println("case3_addAgent --- Fail, errMsg: ", errMsg)
 	}else{
 		fmt.Println("case3_addAgent --- Pass")	
+	}
+*/
+	rslt, errMsg := case4_removeAgent()
+	if false == rslt {
+		fmt.Println("case4_removeAgent --- Fail, errMsg: ", errMsg)
+	}else{
+		fmt.Println("case4_removeAgent --- Pass")	
 	}
 	
 }

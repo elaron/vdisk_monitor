@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 	"os/exec"
 )
 
@@ -114,6 +115,24 @@ func addAgent(agent Agent) (bool, string){
 	}
 
 	return true, ""
+}
+
+func removeAgent(agentID int32) (bool, string){
+	
+	funcName, file, line, _ := runtime.Caller(0)
+	
+	_, err := getAgent(agentID)
+	if nil != err {
+			return false, "Agnet not exist"
+	}
+
+	err = deleteAgent(agentID)
+	if nil != err {
+		fmt.Printf("[%s][%s][%d]Remove agent fail!, Err%q\n ", runtime.FuncForPC(funcName).Name(), file, line, err.Error())
+		return false, "Delete agent fail"
+	}
+
+	return true,""
 }
 
 func isVdiskExistOnAgent(path string){
