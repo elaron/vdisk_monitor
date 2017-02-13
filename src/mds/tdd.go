@@ -110,9 +110,8 @@ func case3_addAgent() (bool, string) {
 		},
 	}
 
-	deleteAgent(101)
-	deleteAgent(100)
-
+	deleteAllAgents()
+	
 	rslt, errMsg := addAgent(agent)
 	
 	if rslt != true {
@@ -155,9 +154,9 @@ func main() {
 
 	rslt, errMsg = case3_addAgent()
 	if false == rslt {
-		fmt.Println("case3_GetAgentList --- Fail, errMsg: ", errMsg)
+		fmt.Println("case3_addAgent --- Fail, errMsg: ", errMsg)
 	}else{
-		fmt.Println("case3_GetAgentList --- Pass")	
+		fmt.Println("case3_addAgent --- Pass")	
 	}
 	
 }

@@ -200,4 +200,15 @@ func getAgentList() ([]Agent, error){
 
 	return agentList, err
 }
+
+func deleteAllAgents() error{
+	deleteAgentFunc := deleteDirectory()
+
+	err := deleteAgentFunc("/agents")
+	if err != nil {
+	 	fmt.Println("Delete all agents fail")
+	 }
+
+	 return err
+}
 //vdisk CRUD
