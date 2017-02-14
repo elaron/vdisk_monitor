@@ -155,7 +155,7 @@ func isVdiskExistOnAgent(vdiskPath string, agent Agent) bool{
 
 	for _, vdiskId := range agent.Primary_vdisks {
 
-		bkpInfo := getVdiskBackupInfo(vdiskId, PRIMARY_BACKUP)
+		bkpInfo,_ := getVdiskBackupInfo(vdiskId, PRIMARY_BACKUP)
 		if vdiskPath == bkpInfo.Path {
 			return true
 		}
@@ -179,11 +179,11 @@ func addVdisk(agentID string, vmId string, path string) error{
 	}
 
 	var vdisk Vdisk
-	vdisk.VmId = vmId
-	vdisk.VmState = RUNNING
+	vdisk.VmInfo.VmId = vmId
+	vdisk.VmInfo.VmState = RUNNING
 
-	vdisk.Backups[PRIMARY_BACKUP].VdiskBackupInfo.ResidentAgentID = agentID
-	vdisk.Backups[PRIMARY_BACKUP].VdiskBackupInfo.Path = path
+	vdisk.Backups[PRIMARY_BACKUP].BackupInfo.ResidentAgentID = agentID
+	vdisk.Backups[PRIMARY_BACKUP].BackupInfo.Path = path
 
 	err = createVdisk(vdisk)
 

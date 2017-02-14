@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"bytes"
+	"errors"
 	"reflect"
 )
 
-func case1_EtcdCRUD() (bool, string) {
+func case1_EtcdCRUD() error {
 
 	createEtcdValue, deleteEtcdValue, updateEtcdValue, getEtcdValue := createKey(), deleteKey(), updateKey(), getKey()
 
@@ -18,49 +19,49 @@ func case1_EtcdCRUD() (bool, string) {
 
 	err := createEtcdValue(key.String(), "Hi, nice to see you")
 	if err != nil {
-		return false, "set key fail!"
+		return errors.New("set key fail!")
 	
 	}else{
 
 		value, err := getEtcdValue(key.String())
 		if (err != nil) || (value != "Hi, nice to see you"){
-			return false, "get key fail"
+			return errors.New("get key fail")
 		}
 
 		err = updateEtcdValue(key.String(), "i am new info")
 		if err != nil {
-			return false, "update key fail"
+			return errors.New("update key fail")
 		}
 
 		value, err = getEtcdValue(key.String())
 		if (err != nil) || (value != "i am new info"){
-			return false, "get key fail"
+			return errors.New("get key fail")
 		}
 
 		err = deleteEtcdValue(key.String())
 		if err != nil {
-			return false, "delete key fail"
+			return errors.New("delete key fail")
 		}
 	}
-	return true, ""
+	return nil
 }
 
-func compareAgent(srcAgent Agent, agentID string) (bool, string){
+func compareAgent(srcAgent Agent, agentID string) error{
 	
 	agentTest, err := getAgent(agentID)
 	if err != nil {
-		return false, "Get agent fail"
+		return errors.New("Get agent fail")
 	}
 
 	if false == reflect.DeepEqual(agentTest, srcAgent) {
 		fmt.Printf("Set agent:%s \nget agent:%s\n", srcAgent, agentTest)
-		return false, "Get agent fail, different with seted agent"
+		return errors.New("Get agent fail, different with seted agent")
 	}
 
-	return true, ""
+	return nil
 }
 
-func case2_AgentCRUD() (bool, string) {
+func case2_AgentCRUD() error {
 
 	var agentID string = "101"
 	agent := Agent{
@@ -75,12 +76,12 @@ func case2_AgentCRUD() (bool, string) {
 
 	err := createAgent(agent)
 	if err != nil {
-		return false, "Add agent fail!!!!"
+		return errors.New("Add agent fail!!!!")
 	}
 
-	rslt, msg := compareAgent(agent, agentID)
-	if false ==  rslt{
-		return rslt, msg
+	err = compareAgent(agent, agentID)
+	if err !=  nil{
+		return err
 	}
 	
 	agent.BasicInfo.State = LOSS_CONN
@@ -88,18 +89,18 @@ func case2_AgentCRUD() (bool, string) {
 	err = updateAgent(agent)
 	if nil != err {
 		fmt.Printf("Update agent fail! Err:%s", err.Error())
-		return false, "Update agent fail"
+		return errors.New("Update agent fail")
 	}
 
-	rslt, msg = compareAgent(agent, agentID)
-	if false ==  rslt{
-		return rslt, msg
+	err = compareAgent(agent, agentID)
+	if err !=  nil{
+		return err
 	}
 
-	return true, ""
+	return nil
 }
 
-func case3_addAgent() (bool, string) {
+func case3_addAgent() error {
 
 	agent := Agent{
 		BasicInfo: AgentBasicInfo {
@@ -115,26 +116,26 @@ func case3_addAgent() (bool, string) {
 	
 	if rslt != true {
 		fmt.Println("Add agent fail, err:", errMsg)
-		return false, "Add agent fail!"
+		return errors.New("Add agent fail!")
 	}
 
 	agent.BasicInfo.Id = "102"
 	rslt, _ = addAgent(agent)
 	if rslt != false {
-		return false, "Detect duplicate AgentIP fail!"
+		return errors.New("Detect duplicate AgentIP fail!")
 	}
 
 	agent.BasicInfo.Id = "101"
 	agent.BasicInfo.HostIp = "10.25.26.47"
 	rslt, _ = addAgent(agent)
 	if rslt != false {
-		return false, "Detect duplicate AgentID fail!"
+		return errors.New("Detect duplicate AgentID fail!")
 	}
 
-	return true, ""
+	return nil
 }
 
-func case4_removeAgent() (bool, string){
+func case4_removeAgent() error {
 	
 	agent := Agent{
 		BasicInfo: AgentBasicInfo {
@@ -152,22 +153,22 @@ func case4_removeAgent() (bool, string){
 	
 	if rslt != true {
 		fmt.Println("Add agent fail, err:", errMsg)
-		return false, "Add agent fail!"
+		return errors.New("Add agent fail!")
 	}
 
 	fmt.Println("here 3")
 	rslt, errMsg = removeAgent("102")
 	if false != rslt {
-		return false, "Fail of detect non-exist agent"
+		return errors.New("Fail of detect non-exist agent")
 	}
 
 	fmt.Println("here 4")
 	rslt, errMsg = removeAgent("101")
 	if true != rslt {
-		return false, "Fail of removing agent"
+		return errors.New("Fail of removing agent")
 	}
 
-	return true, ""
+	return nil
 }
 
 func case5_addVdisk() error{
