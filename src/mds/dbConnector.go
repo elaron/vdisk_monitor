@@ -151,8 +151,9 @@ func getAgent(agentID int32) (Agent, error) {
 
 	if 0 != len(value[AGENT_BASIC_INFO]) {
 		errs[AGENT_BASIC_INFO] = json.Unmarshal([]byte(value[AGENT_BASIC_INFO]), &agent.BasicInfo)
+	
+	}else{
 		return Agent{}, errors.New("Key is non-exist")
-
 	}
 
 	if 0 != len(value[AGENT_PRIMARY_VDISKS]) {
