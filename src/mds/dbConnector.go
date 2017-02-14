@@ -268,11 +268,11 @@ func getVdiskBackupDaemonInfoKey(vdiskId string, backupType BACKUP_TYPE) string{
 	return key
 }
 
-func setNodeValue(vdiskId string, key string, obj interface{}) error{
+func setNodeValue(key string, obj interface{}) error{
 	
 	value, err := json.Marshal(obj)
 	if nil != err {
-		s := fmt.Sprintf("Set key:%s value fail. VdiskId=%s\n", key, vdiskId)
+		s := fmt.Sprintf("Set key:%s value fail.\n", key)
 		return errors.New(s)
 	}
 
@@ -289,7 +289,7 @@ func setNodeValue(vdiskId string, key string, obj interface{}) error{
 func setVdiskVmInfo(vdiskId string, info VmInfomation) error{
 	
 	key := getVdiskVmInfoKey(vdiskId)
-	err := setNodeValue(vdiskId, key, info)
+	err := setNodeValue(key, info)
 
 	return err
 }
@@ -297,7 +297,7 @@ func setVdiskVmInfo(vdiskId string, info VmInfomation) error{
 func setVdiskBackupInfo(vdiskId string, bkp VdiskBackupInfo, bkpType BACKUP_TYPE) error{
 	
 	key := getVdiskBackupKey(vdiskId, bkpType)
-	err := setNodeValue(vdiskId, key, bkp)
+	err := setNodeValue(key, bkp)
 
 	return err
 }
@@ -305,9 +305,62 @@ func setVdiskBackupInfo(vdiskId string, bkp VdiskBackupInfo, bkpType BACKUP_TYPE
 func setVdiskBackupDaemonInfo(vdiskId string, daemonInfo SyncDaemon, bkpType BACKUP_TYPE) error{
 
 	key := getVdiskBackupDaemonInfoKey(vdiskId, bkpType)
-	err := setNodeValue(vdiskId, key, daemonInfo)
+	err := setNodeValue(key, daemonInfo)
 
 	return err
+}
+
+func getNodeOjb(key string) (obj interface{}, err error) {
+
+	getValueFunc := getKey()
+
+	value,err := getValueFunc(key)
+	if nil != err {
+		return 
+	}
+
+	err = json.Unmarshal([]byte(value), &obj)
+
+	return
+}
+
+func getVdiskVmInfo(vdiskId string) (VmInfomation, error) {
+
+	var info VmInfomation
+	key := getVdiskVmInfoKey(vdiskId)
+	getValueFunc := getKey()
+
+	value, err := getValueFunc(key)
+	if nil != err {
+		return info, err
+	}
+
+	err = json.Unmarshal([]byte(value), &info)
+
+	//Type assertions
+	info, ok := i.(VmInfomation)
+	if false == ok {
+		return info, errors.New("Not VmInfomation type")	
+	}
+
+	return info, nil
+}
+
+func getVdiskBackupInfo(vdiskId string, bkpType BACKUP_TYPE) (VdiskBackupInfo, error){
+
+	var info VdiskBackupInfo	
+	key := getVdiskBackupKey(vdiskId, bkpType)
+
+	info, err := getNodeOjb(key)
+	return info, err
+}
+
+func getVdiskBackupDaemonInfo(vdiskId string, bkpType BACKUP_TYPE) (SyncDaemon, error){
+	var info SyncDaemon
+	key := getVdiskBackupDaemonInfoKey(vdiskId, bkpType)
+
+	info, err := getNodeOjb(key)
+	return info, err
 }
 
 func createVdisk(vdisk Vdisk) error{

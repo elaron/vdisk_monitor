@@ -170,35 +170,49 @@ func case4_removeAgent() (bool, string){
 	return true, ""
 }
 
+func case5_addVdisk() error{
+	
+	err := addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
+	return err
+}
+
 func main() {
-	/*
-	rslt, errMsg := case1_EtcdCRUD()
-	if false == rslt {
-		fmt.Println("case1_EtcdCRUD --- Fail, errMsg: ", errMsg)
+	
+	var err error
+
+	err = case1_EtcdCRUD()
+	if nil != err {
+		fmt.Println("case1_EtcdCRUD --- Fail, ", err.Error())
 	}else{
 		fmt.Println("case1_EtcdCRUD --- Pass")	
 	}
 	
 
-	rslt, errMsg = case2_AgentCRUD()
-	if false == rslt {
-		fmt.Println("case2_AgentCRUD --- Fail, errMsg: ", errMsg)
+	err = case2_AgentCRUD()
+	if nil != err {
+		fmt.Println("case2_AgentCRUD --- Fail, ", err.Error())
 	}else{
 		fmt.Println("case2_AgentCRUD --- Pass")	
 	}
 
-	rslt, errMsg = case3_addAgent()
-	if false == rslt {
-		fmt.Println("case3_addAgent --- Fail, errMsg: ", errMsg)
+	err = case3_addAgent()
+	if nil != err {
+		fmt.Println("case3_addAgent --- Fail, ", err.Error())
 	}else{
 		fmt.Println("case3_addAgent --- Pass")	
 	}
-*/
-	rslt, errMsg := case4_removeAgent()
-	if false == rslt {
-		fmt.Println("case4_removeAgent --- Fail, errMsg: ", errMsg)
+
+	err = case4_removeAgent()
+	if nil != err {
+		fmt.Println("case4_removeAgent --- Fail, ", err.Error())
 	}else{
 		fmt.Println("case4_removeAgent --- Pass")	
 	}
 	
+	err = case5_addVdisk()
+	if nil != err {
+		fmt.Println("case5_addVdisk --- Fail, ", err.Error())
+	}else{
+		fmt.Println("case5_addVdisk --- Pass")
+	}
 }

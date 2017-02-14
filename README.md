@@ -17,6 +17,7 @@ Notes & References:
 [etcdctl README](https://github.com/coreos/etcd/blob/master/etcdctl/READMEv2.md)
 
 [etcd client](https://github.com/coreos/etcd/tree/master/client)
+[laws-of-reflection](https://blog.golang.org/laws-of-reflection)
 
 # 编译到 linux 64bit
 $ GOOS=linux GOARCH=amd64 go build

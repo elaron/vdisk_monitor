@@ -62,7 +62,7 @@ type SyncDaemon struct {
 }
 
 type VdiskBackupInfo struct {
-	ResidentAgentID 	int32
+	ResidentAgentID 	string
 	Path 				string
 	Size 				int64
 	BackupStatus 		BACKUP_STATE
@@ -83,7 +83,7 @@ type BACKUP_TYPE int32
 
 type VmInfomation struct {
 	VmId 				string
-	Vmstate 			VM_STATE
+	VmState 			VM_STATE
 }
 
 type Vdisk struct {
@@ -152,11 +152,14 @@ func removeAgent(agentID string) (bool, string){
 }
 
 func isVdiskExistOnAgent(vdiskPath string, agent Agent) bool{
-/*
+
 	for _, vdiskId := range agent.Primary_vdisks {
 
-
-	}*/
+		bkpInfo := getVdiskBackupInfo(vdiskId, PRIMARY_BACKUP)
+		if vdiskPath == bkpInfo.Path {
+			return true
+		}
+	}
 
 	return false
 }
@@ -175,5 +178,14 @@ func addVdisk(agentID string, vmId string, path string) error{
 		return errors.New(errMsg)
 	}
 
-	return nil
+	var vdisk Vdisk
+	vdisk.VmId = vmId
+	vdisk.VmState = RUNNING
+
+	vdisk.Backups[PRIMARY_BACKUP].VdiskBackupInfo.ResidentAgentID = agentID
+	vdisk.Backups[PRIMARY_BACKUP].VdiskBackupInfo.Path = path
+
+	err = createVdisk(vdisk)
+
+	return err
 }
