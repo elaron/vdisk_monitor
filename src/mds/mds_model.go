@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 	"os/exec"
+	"errors"
 )
 
 //define enums
@@ -42,7 +43,7 @@ type BACKUP_STATE int32
 type AgentBasicInfo struct {
 	HostIp 		string
 	Hostname 	string
-	Id 			int32
+	Id 			string
 	State 		DAEMON_STATE_TYPE
 }
 
@@ -60,20 +61,35 @@ type SyncDaemon struct {
 	LastHeartBeatTime	int64
 }
 
-type VdiskBackup struct {
+type VdiskBackupInfo struct {
 	ResidentAgentID 	int32
 	Path 				string
 	Size 				int64
 	BackupStatus 		BACKUP_STATE
 	SyncPercent 		int32
-	SyncDaemonInfo		SyncDaemon
+}
+
+type VdiskBackup struct {
+	BackupInfo 		VdiskBackupInfo
+	SyncDaemonInfo	SyncDaemon
+}
+
+const (
+	PRIMARY_BACKUP = iota
+	SECONDARY_BACKUP
+	BACKUP_TYPE_BUTT
+)
+type BACKUP_TYPE int32
+
+type VmInfomation struct {
+	VmId 				string
+	Vmstate 			VM_STATE
 }
 
 type Vdisk struct {
-	Id 					string
-	VmId 				string
-	Vmstate 			VM_STATE
-	Backups 			[]VdiskBackup
+	Id 			string
+	VmInfo 		VmInfomation
+	Backups 	[BACKUP_TYPE_BUTT]VdiskBackup
  }
 
 func genUUID() string {
@@ -117,7 +133,7 @@ func addAgent(agent Agent) (bool, string){
 	return true, ""
 }
 
-func removeAgent(agentID int32) (bool, string){
+func removeAgent(agentID string) (bool, string){
 	
 	funcName, file, line, _ := runtime.Caller(0)
 	
@@ -135,6 +151,29 @@ func removeAgent(agentID int32) (bool, string){
 	return true,""
 }
 
-func isVdiskExistOnAgent(path string){
+func isVdiskExistOnAgent(vdiskPath string, agent Agent) bool{
+/*
+	for _, vdiskId := range agent.Primary_vdisks {
 
+
+	}*/
+
+	return false
+}
+
+func addVdisk(agentID string, vmId string, path string) error{
+	
+	agent,err := getAgent(agentID)
+	if nil != err {
+		fmt.Printf("Can't add vdisk on nonexistent agent(id=%d)\n", agentID)
+		return errors.New("Agent not exist!")
+	}
+
+	vdiskExist := isVdiskExistOnAgent(path, agent)
+	if true == vdiskExist {
+		errMsg := fmt.Sprintf("Vdisk(%s) already exist on agent!\n", path)
+		return errors.New(errMsg)
+	}
+
+	return nil
 }

@@ -67,7 +67,7 @@ func deleteKey() func(key string) error{
 		_, err := keyApi.Delete(context.Background(), key, nil)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			fmt.Println("Delete key fail, ", err.Error())
 		
 		}/*else{
@@ -91,8 +91,34 @@ func updateKey() func(key string, value string) error{
 		_, err := keyApi.Update(context.Background(), key, value)
 		
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			fmt.Println("Update key fail", err.Error())
+		
+		} /*else {
+			// print common key info
+			log.Printf("Update is done. Metadata is %q\n", resp)
+		}*/
+
+		return err
+	}
+}
+
+func setKey() func(key string, value string) error{
+	
+	keyApi := getKeysAPI()
+
+	return func (key string, value string) error {
+
+	// Set assigns a new value to a Node identified by a given key. The caller
+	// may define a set of conditions in the SetOptions. If SetOptions.Dir=true
+	// then value is ignored.
+	//Set(ctx context.Context, key, value string, opts *SetOptions) (*Response, error)
+
+		_, err := keyApi.Set(context.Background(), key, value, nil)
+		
+		if err != nil {
+			log.Println(err)
+			fmt.Println("Set key fail", err.Error())
 		
 		} /*else {
 			// print common key info

@@ -45,7 +45,7 @@ func case1_EtcdCRUD() (bool, string) {
 	return true, ""
 }
 
-func compareAgent(srcAgent Agent, agentID int32) (bool, string){
+func compareAgent(srcAgent Agent, agentID string) (bool, string){
 	
 	agentTest, err := getAgent(agentID)
 	if err != nil {
@@ -62,7 +62,7 @@ func compareAgent(srcAgent Agent, agentID int32) (bool, string){
 
 func case2_AgentCRUD() (bool, string) {
 
-	var agentID int32 = 101
+	var agentID string = "101"
 	agent := Agent{
 		BasicInfo: AgentBasicInfo {
 			HostIp:     "10.25.26.46",
@@ -105,7 +105,7 @@ func case3_addAgent() (bool, string) {
 		BasicInfo: AgentBasicInfo {
 			HostIp:     "10.25.26.46",
 			Hostname:   "agent100",
-			Id:         101,
+			Id:         "101",
 		},
 	}
 
@@ -118,13 +118,13 @@ func case3_addAgent() (bool, string) {
 		return false, "Add agent fail!"
 	}
 
-	agent.BasicInfo.Id = 102
+	agent.BasicInfo.Id = "102"
 	rslt, _ = addAgent(agent)
 	if rslt != false {
 		return false, "Detect duplicate AgentIP fail!"
 	}
 
-	agent.BasicInfo.Id = 101
+	agent.BasicInfo.Id = "101"
 	agent.BasicInfo.HostIp = "10.25.26.47"
 	rslt, _ = addAgent(agent)
 	if rslt != false {
@@ -140,7 +140,7 @@ func case4_removeAgent() (bool, string){
 		BasicInfo: AgentBasicInfo {
 			HostIp:     "10.25.26.46",
 			Hostname:   "agent100",
-			Id:         101,
+			Id:         "101",
 		},
 	}
 
@@ -156,13 +156,13 @@ func case4_removeAgent() (bool, string){
 	}
 
 	fmt.Println("here 3")
-	rslt, errMsg = removeAgent(102)
+	rslt, errMsg = removeAgent("102")
 	if false != rslt {
 		return false, "Fail of detect non-exist agent"
 	}
 
 	fmt.Println("here 4")
-	rslt, errMsg = removeAgent(101)
+	rslt, errMsg = removeAgent("101")
 	if true != rslt {
 		return false, "Fail of removing agent"
 	}

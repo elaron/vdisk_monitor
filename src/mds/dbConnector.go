@@ -29,11 +29,11 @@ const (
 )
 type AGENT_SUB_NODE_TYPE int32
 
-func getAgentRootKey(agentID int32) string{
+func getAgentRootKey(agentID string) string{
 
 	key := bytes.Buffer{}
 	key.WriteString("/agents/")
-	key.WriteString(formatInt32(agentID))
+	key.WriteString(agentID)
 	key.WriteString("/")
 	
 	return key.String()
@@ -43,7 +43,7 @@ func getAgentSubNodeNames() []string {
 	return []string{"basicInfo", "primary_vdisks", "secondary_vdisks"}
 }
 
-func getAgentSubNodesPaths(agentID int32) []string{
+func getAgentSubNodesPaths(agentID string) []string{
 	
 	agentRootKey := getAgentRootKey(agentID)
 	subNodeNames := getAgentSubNodeNames()
@@ -62,7 +62,7 @@ func getAgentSubNodesPaths(agentID int32) []string{
 	return subNodePaths
 }
 
-func  getAgentSubNodeValues(agent Agent) ([AGGENT_SUB_NODE_TYPE_BUTT]string, error){
+func getAgentSubNodeValues(agent Agent) ([AGGENT_SUB_NODE_TYPE_BUTT]string, error){
 	
 	var b 				[]byte
 	var errs 			[AGGENT_SUB_NODE_TYPE_BUTT]error
@@ -121,7 +121,7 @@ func updateAgent(agent Agent) error{
 	return setAgent(updateKey, agent)
 }
 
-func deleteAgent(agentID int32) error {
+func deleteAgent(agentID string) error {
 
 	agentRootKey 	:= getAgentRootKey(agentID)	
 	deleteAgentFunc := deleteDirectory()
@@ -134,7 +134,7 @@ func deleteAgent(agentID int32) error {
 	 return err
 }
 
-func getAgent(agentID int32) (Agent, error) {
+func getAgent(agentID string) (Agent, error) {
 	
 	getAgentNodeValueFunc := getKey()
 	subNodePaths := getAgentSubNodesPaths(agentID)
@@ -188,14 +188,10 @@ func getAgentList() ([]Agent, error){
 
 	for _, path := range agentKeyPaths{
 	
-		subStrs := strings.Split(path, "/")
+		strArr := strings.Split(path, "/")
+		agentID := strArr[len(strArr) - 1]
 
-		agentID, err := strconv.ParseInt(subStrs[len(subStrs) - 1], 10, 32)
-		if err != nil {
-    		continue
-		}
-
-		agent,err := getAgent(int32(agentID))
+		agent,err := getAgent(agentID)
 		if nil != err {
 			continue
 		}
@@ -216,4 +212,128 @@ func deleteAllAgents() error{
 
 	 return err
 }
+
 //vdisk CRUD
+func getVdiskSubNodeKey(vdiskId string, subNode string) string{
+	
+	key := bytes.Buffer{}
+	
+	key.WriteString("/vdisks/")
+	key.WriteString(vdiskId)
+	key.WriteString(subNode)
+	
+	return key.String()
+}
+
+func getVdiskVmInfoKey(vdiskId string) string{
+	str := getVdiskSubNodeKey(vdiskId, "/vmInfo")
+	return str
+}
+
+func getVdiskBackupKey(vdiskId string, backupType BACKUP_TYPE) string{
+
+	var key string
+	switch backupType {
+	
+	case PRIMARY_BACKUP:
+		key = getVdiskSubNodeKey(vdiskId, "/backups/primary_bkp")
+
+	case SECONDARY_BACKUP:
+		key = getVdiskSubNodeKey(vdiskId, "/backups/secondary_bkp")
+	
+	default:
+		fmt.Printf("Invalid backupType:%d\n", backupType)
+		key = ""
+	}
+
+	return key
+}
+
+func getVdiskBackupDaemonInfoKey(vdiskId string, backupType BACKUP_TYPE) string{
+	
+	var key string
+
+	switch backupType {
+
+	case PRIMARY_BACKUP:
+		key = getVdiskSubNodeKey(vdiskId, "/backups/primary_bkp/daemonInfo")
+
+	case SECONDARY_BACKUP:
+		key = getVdiskSubNodeKey(vdiskId, "/backups/secondary_bkp/daemonInfo")
+
+	default:
+		key = ""
+	}
+
+	return key
+}
+
+func setNodeValue(vdiskId string, key string, obj interface{}) error{
+	
+	value, err := json.Marshal(obj)
+	if nil != err {
+		s := fmt.Sprintf("Set key:%s value fail. VdiskId=%s\n", key, vdiskId)
+		return errors.New(s)
+	}
+
+	setValueFunc := setKey()
+
+	err = setValueFunc(key, string(value))
+	if nil != err {
+		return err
+	}
+
+	return nil	
+}
+
+func setVdiskVmInfo(vdiskId string, info VmInfomation) error{
+	
+	key := getVdiskVmInfoKey(vdiskId)
+	err := setNodeValue(vdiskId, key, info)
+
+	return err
+}
+
+func setVdiskBackupInfo(vdiskId string, bkp VdiskBackupInfo, bkpType BACKUP_TYPE) error{
+	
+	key := getVdiskBackupKey(vdiskId, bkpType)
+	err := setNodeValue(vdiskId, key, bkp)
+
+	return err
+}
+
+func setVdiskBackupDaemonInfo(vdiskId string, daemonInfo SyncDaemon, bkpType BACKUP_TYPE) error{
+
+	key := getVdiskBackupDaemonInfoKey(vdiskId, bkpType)
+	err := setNodeValue(vdiskId, key, daemonInfo)
+
+	return err
+}
+
+func createVdisk(vdisk Vdisk) error{
+	
+	var err error
+
+	err = setVdiskVmInfo(vdisk.Id, vdisk.VmInfo)
+	if nil != err {
+		return err
+	}
+
+	var bkpType BACKUP_TYPE = PRIMARY_BACKUP
+
+	for ; bkpType < BACKUP_TYPE_BUTT; bkpType++ {
+	
+		err = setVdiskBackupInfo(vdisk.Id, vdisk.Backups[bkpType].BackupInfo, bkpType)
+		if nil != err {
+			return err
+		}
+		
+		err = setVdiskBackupDaemonInfo(vdisk.Id, vdisk.Backups[bkpType].SyncDaemonInfo, bkpType)
+		if nil != err {
+			return err
+		}		
+	}
+
+	return nil
+}
+
