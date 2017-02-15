@@ -11,14 +11,16 @@ import (
 )
 
 type RegisterAgentMsg struct {
+	MsgType	 string
 	Hostname string
 	Ip       string
 	Id       string
 }
 
 type AddVdiskMsg struct {
+	MsgType string
 	AgentId string
-	vmId string
+	VmId string
 	Path string
 }
 
@@ -56,8 +58,27 @@ func sendMsgToMds() func(string) error{
 	}
 }
 
+func sendRegisteAgentMsg() {
+	message := RegisterAgentMsg{
+		MsgType: "REGISTE_AGENT",
+		Hostname: "aaa",
+		Ip:       "192.168.56.104",
+		Id:       "100",
+	}
+
+	msg, err := json.Marshal(message)
+	if nil != err {
+		fmt.Println(err.Error())
+		return
+	}
+
+	sendFunc := sendMsgToMds()
+	sendFunc(string(msg))
+}
+
 func getAgentIdentifyInfo() string {
 	registerAgent := RegisterAgentMsg{
+		MsgType: "AGENT_HEAT_BEAT",
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
 		Id:       "100",
@@ -101,8 +122,9 @@ func sendAddVdiskMsgToMds() {
 		path := fmt.Sprintf("/root/wyd/case%d/vdisk_%d.qcow2", vmIdx, pathIdx)
 
 		message := AddVdiskMsg{
+			MsgType: "ADD_VDISK",
 			AgentId: "100",
-			vmId: vmName,
+			VmId: vmName,
 			Path: path,
 		}
 

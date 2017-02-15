@@ -103,32 +103,28 @@ func case2_AgentCRUD() error {
 
 func case3_addAgent() error {
 
-	agent := Agent{
-		BasicInfo: AgentBasicInfo {
-			HostIp:     "10.25.26.46",
-			Hostname:   "agent100",
-			Id:         "101",
-		},
-	}
+	agentID := "101"
+	hostIp := "10.25.26.46"
+	hostname := "agent100"
 
 	deleteAllAgents()
 
-	rslt, errMsg := addAgent(agent)
+	rslt, errMsg := addAgent(agentID, hostIp, hostname)
 	
 	if rslt != true {
 		fmt.Println("Add agent fail, err:", errMsg)
 		return errors.New("Add agent fail!")
 	}
 
-	agent.BasicInfo.Id = "102"
-	rslt, _ = addAgent(agent)
+	agentID = "102"
+	rslt, _ = addAgent(agentID, hostIp, hostname)
 	if rslt != false {
 		return errors.New("Detect duplicate AgentIP fail!")
 	}
 
-	agent.BasicInfo.Id = "101"
-	agent.BasicInfo.HostIp = "10.25.26.47"
-	rslt, _ = addAgent(agent)
+	agentID = "101"
+	hostIp = "10.25.26.47"
+	rslt, _ = addAgent(agentID, hostIp, hostname)
 	if rslt != false {
 		return errors.New("Detect duplicate AgentID fail!")
 	}
@@ -138,17 +134,13 @@ func case3_addAgent() error {
 
 func case4_removeAgent() error {
 	
-	agent := Agent{
-		BasicInfo: AgentBasicInfo {
-			HostIp:     "10.25.26.46",
-			Hostname:   "agent100",
-			Id:         "101",
-		},
-	}
+	agentID := "101"
+	hostIp := "10.25.26.46"
+	hostname := "agent100"
 
 	deleteAllAgents()
 
-	rslt, errMsg := addAgent(agent)
+	rslt, errMsg := addAgent(agentID, hostIp, hostname)
 	
 	if rslt != true {
 		fmt.Println("Add agent fail, err:", errMsg)
@@ -170,18 +162,14 @@ func case4_removeAgent() error {
 
 func case5_addVdisk() error{
 	
-	agent := Agent{
-		BasicInfo: AgentBasicInfo {
-			HostIp:     "10.25.26.46",
-			Hostname:   "agent100",
-			Id:         "101",
-		},
-	}
+	agentID := "101"
+	hostIp := "10.25.26.46"
+	hostname := "agent100"
 
 	deleteAllAgents()
 	deleteAllVdisks()
 
-	rslt, errMsg := addAgent(agent)
+	rslt, errMsg := addAgent(agentID, hostIp, hostname)
 	
 	if rslt != true {
 		fmt.Println("Add agent fail, err:", errMsg)

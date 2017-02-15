@@ -116,7 +116,16 @@ func isAgentExist(agentList []Agent, agent Agent) (bool, string){
 	return false, ""
 }
 
-func addAgent(agent Agent) (bool, string){
+func addAgent(agentId string, ip string, hostname string) (bool, string){
+
+	agent := Agent{
+		BasicInfo: AgentBasicInfo {
+			HostIp:     ip,
+			Hostname:   hostname,
+			Id:         agentId,
+			State: ACTIVE,
+		},
+	}
 
 	agentList, err := getAgentList()
 
