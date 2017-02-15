@@ -145,10 +145,8 @@ func case4_removeAgent() error {
 		},
 	}
 
-	fmt.Println("here 1")
 	deleteAllAgents()
 
-	fmt.Println("here 2")
 	rslt, errMsg := addAgent(agent)
 	
 	if rslt != true {
@@ -156,13 +154,11 @@ func case4_removeAgent() error {
 		return errors.New("Add agent fail!")
 	}
 
-	fmt.Println("here 3")
 	rslt, errMsg = removeAgent("102")
 	if false != rslt {
 		return errors.New("Fail of detect non-exist agent")
 	}
 
-	fmt.Println("here 4")
 	rslt, errMsg = removeAgent("101")
 	if true != rslt {
 		return errors.New("Fail of removing agent")
@@ -173,6 +169,22 @@ func case4_removeAgent() error {
 
 func case5_addVdisk() error{
 	
+	agent := Agent{
+		BasicInfo: AgentBasicInfo {
+			HostIp:     "10.25.26.46",
+			Hostname:   "agent100",
+			Id:         "101",
+		},
+	}
+
+	deleteAllAgents()
+	rslt, errMsg := addAgent(agent)
+	
+	if rslt != true {
+		fmt.Println("Add agent fail, err:", errMsg)
+		return errors.New("Add agent fail!")
+	}
+
 	err := addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
 	return err
 }

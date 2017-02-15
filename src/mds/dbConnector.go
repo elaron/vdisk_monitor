@@ -180,8 +180,8 @@ func getAgentList() ([]Agent, error){
 
 	agentKeyPaths, err := getAgentListFunc("/agents")
 	if nil != err {
-		fmt.Println("Get agent list fail! Err:", err.Error())
-		return []Agent{}, err
+		s := fmt.Sprintf("Get agent list fail! Err: %s\n", err.Error())
+		return []Agent{}, errors.New(s)
 	}
 
 	var agentList []Agent
@@ -203,14 +203,16 @@ func getAgentList() ([]Agent, error){
 }
 
 func deleteAllAgents() error{
+
 	deleteAgentFunc := deleteDirectory()
 
 	err := deleteAgentFunc("/agents")
 	if err != nil {
-	 	fmt.Println("Delete all agents fail")
+	 	s := fmt.Sprintf("Delete all agents fail, err: %s\n", err.Error())
+	 	return errors.New(s)
 	 }
 
-	 return err
+	 return nil
 }
 
 //vdisk CRUD

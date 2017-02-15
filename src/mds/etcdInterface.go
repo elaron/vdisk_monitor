@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 	"fmt"
+	"errors"
 	"github.com/coreos/etcd/client"
 	"golang.org/x/net/context"
 )
@@ -142,8 +143,8 @@ func getKey() func(key string) (string, error){
 		
 		if err != nil {
 			//log.Fatal(err)
-			fmt.Println("get key fail", err.Error())
-			return "", err
+			s := fmt.Sprintf("Etcd - Get key fail, err : %s\n", err.Error())
+			return "", errors.New(s)
 
 		}/*else {
 			log.Printf("Get is done. Metadata is %q\n", resp)
@@ -191,13 +192,15 @@ func getDirectory() (func (key string) ([]string, error)) {
 	return func (key string) ([]string, error) {
 
 		var values []string
-		
+
 		resp, err := keyApi.Get(context.Background(), key, opt)
-		
 		if nil != err {
-			fmt.Println("Get directory fail, err: ", err.Error())
+			
+			s := fmt.Sprintf("Get directory fail, err: %s\n", err.Error())
+			return []string{}, errors.New(s)
 
 		}else{
+			
 			if resp.Node.Dir != true {
 				values = append(values, string(resp.Node.Value))
 
@@ -211,6 +214,6 @@ func getDirectory() (func (key string) ([]string, error)) {
 			}
 		}
 
-		return values, err
+		return values, nil
 	}
 }
