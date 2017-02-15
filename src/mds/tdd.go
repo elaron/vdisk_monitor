@@ -201,7 +201,7 @@ func case5_addVdisk() error{
 
 	t1 := time.Now()
 
-	var loopCnt int = 100
+	var loopCnt int = 128
 	for i := 0; i < loopCnt; i++ {
 		path := fmt.Sprintf("root/case5/vdisk%d.qcow2", i)
 
