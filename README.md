@@ -12,6 +12,10 @@ Notes & References:
 
 [goroutine channel select](https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/02.7.md)
 
+[non-blocking-channel & select](https://gobyexample.com/non-blocking-channel-operations)
+
+[timer](https://gobyexample.com/timers)
+
 [go socket](http://blog.csdn.net/ahlxt123/article/details/47320161)
 
 [etcdctl README](https://github.com/coreos/etcd/blob/master/etcdctl/READMEv2.md)
