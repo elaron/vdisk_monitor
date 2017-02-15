@@ -6,13 +6,20 @@ import (
 	"net"
 	"os"
 	"time"
+	"math/rand"
 	//"runtime"
 )
 
 type RegisterAgentMsg struct {
 	Hostname string
 	Ip       string
-	Id       int32
+	Id       string
+}
+
+type AddVdiskMsg struct {
+	AgentId string
+	vmId string
+	Path string
 }
 
 func connectMds() (net.Conn){
@@ -53,7 +60,7 @@ func getAgentIdentifyInfo() string {
 	registerAgent := RegisterAgentMsg{
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
-		Id:       100,
+		Id:       "100",
 	}
 
 	msg, err := json.Marshal(registerAgent)
@@ -77,4 +84,35 @@ func heartbeatToMds() {
 		fmt.Println(info)
 		time.Sleep(1 * time.Second)
 	}
+}
+
+
+
+func sendAddVdiskMsgToMds() {
+
+	sendFunc := sendMsgToMds()
+	
+	for {
+
+		vmIdx := rand.Intn(30)
+		pathIdx := rand.Intn(100)
+
+		vmName := fmt.Sprintf("vm_case%d", vmIdx)
+		path := fmt.Sprintf("/root/wyd/case%d/vdisk_%d.qcow2", vmIdx, pathIdx)
+
+		message := AddVdiskMsg{
+			AgentId: "100",
+			vmId: vmName,
+			Path: path,
+		}
+
+		b, err := json.Marshal(message)
+		if nil != err {
+			fmt.Printf("Generate add vdisk msg fail, err :%s", err.Error())
+		}
+
+		sendFunc(string(b))
+		time.Sleep(3 * time.Second)
+	}
+	
 }
