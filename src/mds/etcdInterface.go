@@ -68,14 +68,13 @@ func deleteKey() func(key string) error{
 		_, err := keyApi.Delete(context.Background(), key, nil)
 
 		if err != nil {
-			log.Println(err)
-			fmt.Println("Delete key fail, ", err.Error())
-		
+			s := fmt.Sprintf("Delete key fail, err: %s", err.Error())
+			return errors.New(s)		
 		}/*else{
 			log.Printf("Delete is done, Metadata is %q\n", resp)
 		}*/
 
-		return err
+		return nil
 	}
 }
 

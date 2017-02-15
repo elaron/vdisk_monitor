@@ -153,6 +153,10 @@ func removeAgent(agentID string) (bool, string){
 
 func isVdiskExistOnAgent(vdiskPath string, agent Agent) bool{
 
+	if len(agent.Primary_vdisks) == 0 {
+		return false
+	}
+
 	for _, vdiskId := range agent.Primary_vdisks {
 
 		bkpInfo,_ := getVdiskBackupInfo(vdiskId, PRIMARY_BACKUP)
@@ -168,24 +172,79 @@ func addVdisk(agentID string, vmId string, path string) error{
 	
 	agent,err := getAgent(agentID)
 	if nil != err {
-		fmt.Printf("Can't add vdisk on nonexistent agent(id=%d)\n", agentID)
-		return errors.New("Agent not exist!")
+		s := fmt.Sprintf("Agent(%s) is not exist!")
+		return errors.New(s)
 	}
 
 	vdiskExist := isVdiskExistOnAgent(path, agent)
 	if true == vdiskExist {
-		errMsg := fmt.Sprintf("Vdisk(%s) already exist on agent!\n", path)
-		return errors.New(errMsg)
+		s := fmt.Sprintf("Vdisk(%s) already exist on agent!\n", path)
+		return errors.New(s)
 	}
 
 	var vdisk Vdisk
+
+	vdisk.Id = genUUID()
 	vdisk.VmInfo.VmId = vmId
 	vdisk.VmInfo.VmState = RUNNING
 
 	vdisk.Backups[PRIMARY_BACKUP].BackupInfo.ResidentAgentID = agentID
 	vdisk.Backups[PRIMARY_BACKUP].BackupInfo.Path = path
 
-	err = createVdisk(vdisk)
+	vdisk.Backups[PRIMARY_BACKUP].SyncDaemonInfo.SyncType = ORIGINATOR
 
+	err = createVdisk(vdisk)
+	if nil != err {
+		s := fmt.Sprintf("Create vdisk fail! Add vdisk(%s) on agent(%s) fail!", path, agentID)
+		return errors.New(s)
+	}
+	agent.Primary_vdisks = append(agent.Primary_vdisks, vdisk.Id)
+
+	err = updateAgent(agent)
+	if nil != err {
+		s := fmt.Sprintf("Update agent(%s) fail, add vdisk(%s) fail!", agentID, path)
+		return errors.New(s)
+	}
+	
+	return err
+}
+
+func getVdiskId(agentID string, path string) (string, error){
+	
+	agent,err := getAgent(agentID)
+	if nil != err {
+		s := fmt.Sprintf("Get vdiskId(path=%s) fail, because get agent(%s) fail", path, agentID)
+		return "", errors.New(s)
+	}
+
+	for _, vdiskId := range agent.Primary_vdisks {
+
+		bkpInfo,_ := getVdiskBackupInfo(vdiskId, PRIMARY_BACKUP)
+		
+		if path == bkpInfo.Path {
+			return vdiskId, nil
+		}
+	}
+
+	s := fmt.Sprintf("Can't find vdisk(%s) on agent(%s)", path, agentID)
+	return "", errors.New(s)
+}
+
+func removeVdisk(vdiskID string, agentID string, path string) error{
+
+	var rmvVdiskID string
+	var err error
+
+	if len(vdiskID) == 0 {
+		
+		rmvVdiskID, err = getVdiskId(agentID, path)
+		if nil != err{
+			return err
+		}
+	}else{
+		rmvVdiskID = vdiskID
+	}
+
+	err = deleteVdisk(rmvVdiskID)
 	return err
 }

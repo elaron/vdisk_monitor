@@ -128,10 +128,11 @@ func deleteAgent(agentID string) error {
 
 	err := deleteAgentFunc(agentRootKey)
 	if err != nil {
-	 	fmt.Println("Delete agent fail")
+	 	s := fmt.Sprintf("Delete agent fail! err :%s", err.Error())
+	 	return errors.New(s)
 	 }
 
-	 return err
+	 return nil
 }
 
 func getAgent(agentID string) (Agent, error) {
@@ -238,10 +239,10 @@ func getVdiskBackupKey(vdiskId string, backupType BACKUP_TYPE) string{
 	switch backupType {
 	
 	case PRIMARY_BACKUP:
-		key = getVdiskSubNodeKey(vdiskId, "/backups/primary_bkp")
+		key = getVdiskSubNodeKey(vdiskId, "/backups/primary_bkp/backupInfo")
 
 	case SECONDARY_BACKUP:
-		key = getVdiskSubNodeKey(vdiskId, "/backups/secondary_bkp")
+		key = getVdiskSubNodeKey(vdiskId, "/backups/secondary_bkp/backupInfo")
 	
 	default:
 		fmt.Printf("Invalid backupType:%d\n", backupType)
@@ -393,5 +394,32 @@ func createVdisk(vdisk Vdisk) error{
 	}
 
 	return nil
+}
+
+func deleteVdisk(vdiskId string) error{
+	
+	deleteKeyFunc := deleteDirectory()
+	key := fmt.Sprintf("/vdisks/%s", vdiskId)
+
+	err := deleteKeyFunc(key)
+	if nil != err {
+		s := fmt.Sprintf("Delete vdisk fail! err :%s", err.Error())
+		return errors.New(s)
+	}
+
+	return nil
+}
+
+func deleteAllVdisks() error{
+
+	deleteAgentFunc := deleteDirectory()
+
+	err := deleteAgentFunc("/vdisks")
+	if err != nil {
+	 	s := fmt.Sprintf("Delete all vdisks fail, err: %s\n", err.Error())
+	 	return errors.New(s)
+	 }
+
+	 return nil
 }
 

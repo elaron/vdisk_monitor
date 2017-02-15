@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 	"bytes"
 	"errors"
 	"reflect"
@@ -178,6 +179,8 @@ func case5_addVdisk() error{
 	}
 
 	deleteAllAgents()
+	deleteAllVdisks()
+
 	rslt, errMsg := addAgent(agent)
 	
 	if rslt != true {
@@ -186,7 +189,44 @@ func case5_addVdisk() error{
 	}
 
 	err := addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
-	return err
+	if nil != err {
+		return err
+	}
+
+	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
+	if nil == err {
+		s := fmt.Sprintf("Fail of detecting duplicate vdisk!")
+		return errors.New(s)
+	}
+
+	t1 := time.Now()
+
+	var loopCnt int = 100
+	for i := 0; i < loopCnt; i++ {
+		path := fmt.Sprintf("root/case5/vdisk%d.qcow2", i)
+
+		err := addVdisk("101", "vm_case5", path)
+		if nil != err {
+			return err
+		}
+	}
+	
+	fmt.Printf("Add %d vdisks need:%q\n ", loopCnt, time.Since(t1))
+
+	t2 := time.Now()
+
+	for i := 0; i < loopCnt; i++ {
+		path := fmt.Sprintf("root/case5/vdisk%d.qcow2", i)
+
+		err := removeVdisk("", "101", path)
+		if nil != err {
+			return err
+		}
+	}
+
+	fmt.Printf("Remove %d vdisks need:%q\n ", loopCnt, time.Since(t2))
+
+	return nil
 }
 
 func main() {
