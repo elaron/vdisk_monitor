@@ -213,10 +213,36 @@ func case5_addVdisk() error{
 	return nil
 }
 
+func case6_Watcher() error{
+
+	agentID := "101"
+	hostIp := "10.25.26.46"
+	hostname := "agent100"
+
+	deleteAllAgents()
+	deleteAllVdisks()
+
+	err := addAgent(agentID, hostIp, hostname)
+	if nil != err {
+		return err
+	}
+
+	watchFunc := etcdIntf.WatchKey()
+
+	go watchFunc("/agents/101/primary_vdisks")
+
+	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
+	if nil != err {
+		return err
+	}
+
+	return nil
+}
+
 func main() {
 	
 	var err error
-
+/*
 	err = case1_EtcdCRUD()
 	if nil != err {
 		fmt.Println("case1_EtcdCRUD --- Fail, ", err.Error())
@@ -251,5 +277,12 @@ func main() {
 		fmt.Println("case5_addVdisk --- Fail, ", err.Error())
 	}else{
 		fmt.Println("case5_addVdisk --- Pass")
+	}
+	*/
+	err = case6_Watcher()
+	if nil != err {
+		fmt.Println("case6_Watcher --- Fail, ", err.Error())
+	}else{
+		fmt.Println("case6_Watcher --- Pass")
 	}
 }
