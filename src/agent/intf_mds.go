@@ -83,7 +83,7 @@ func sendRegisteAgentMsg() {
 		MsgType: "REGISTER_AGENT",
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
-		Id:       "100",
+		Id:       "agent100",
 	}
 
 	msg, err := json.Marshal(message)
@@ -101,7 +101,7 @@ func getAgentIdentifyInfo() string {
 		MsgType: "AGENT_HEART_BEAT",
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
-		Id:       "100",
+		Id:       "agent100",
 	}
 
 	msg, err := json.Marshal(registerAgent)
@@ -143,7 +143,7 @@ func sendAddVdiskMsgToMds() {
 
 		message := AddVdiskMsg{
 			MsgType: "ADD_VDISK",
-			AgentId: "100",
+			AgentId: "agent100",
 			VmId: vmName,
 			Path: path,
 		}
@@ -153,10 +153,14 @@ func sendAddVdiskMsgToMds() {
 			fmt.Printf("Generate add vdisk msg fail, err :%s", err.Error())
 		}
 
-		sendFunc(string(b))
+		err = sendFunc(string(b))
+		if err != nil {
+			fmt.Println("Send addvdisk fail")
+			break
+		}
 		fmt.Println(string(b))
 		
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
 

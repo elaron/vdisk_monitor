@@ -198,7 +198,7 @@ func msgHandler(jsonMsg []byte) (feedback string, err error){
 			feedback, err = handleRegisterAgentMsg(m, string(jsonMsg))	
 
 		case "ADD_VDISK":
-			//feedback, err = handleAddVdiskMsg(m, string(jsonMsg))
+			feedback, err = handleAddVdiskMsg(m, string(jsonMsg))
 
 		case "AGENT_HEART_BEAT":
 			fmt.Println(string(jsonMsg))
@@ -246,7 +246,7 @@ func handleConnection(conn net.Conn) {
 
 		fmt.Println("Feedback:", feedback)
 		
-		//go sendFeedback(conn, feedback)
+		go sendFeedback(conn, feedback)
 	}
 }
 

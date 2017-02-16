@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 func main() {
 
 	sendRegisteAgentMsg()
@@ -8,7 +10,7 @@ func main() {
 	go sendAddVdiskMsgToMds()
 
 	for {
-
+        time.Sleep(60 * time.Second)
 	}
 	
 }
