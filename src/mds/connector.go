@@ -29,49 +29,90 @@ func setuplistener() {
 
 func handleRegisterAgentMsg(m map[string]interface{}, msg string) {
 
-	hostName, ok := m["Hostname"]
+	value, ok := m["Hostname"]
 	if false == ok {
 		fmt.Printf("Lack of Hostname, register agent fail. Msg:%s", string(msg))
 		return
 	}
+	hostName, ok := value.(string)
+	if false == ok {
+		fmt.Printf("Hostname type assertion fail")
+		return
+	}
 
-	ip, ok := m["Ip"]
+	value, ok = m["Ip"]
 	if false == ok {
 		fmt.Printf("Lack of Ip, register agent fail. Msg:%s", string(msg))
 		return
 	}
+	hostIP, ok := value.(string)
+	if false == ok {
+		fmt.Printf("hostIP type assertion fail")
+		return
+	}
 
-	id, ok := m["Id"]
+
+	value, ok = m["Id"]
 	if false == ok {
 		fmt.Printf("Lack of Id, register agent fail. Msg:%s", string(msg))
 		return
 	}
+	agentID, ok := value.(string)
+	if false == ok {
+		fmt.Printf("AgentId type assertion fail")
+		return
+	}
 
-	addVdisk(id, ip, hostName)
+
+	err := addAgent(agentID, hostIP, hostName)
+	if nil != err {
+		fmt.Println("Register agent fail!")
+	}
+
+	fmt.Println("Register agent success")
 }
 
 func handleAddVdiskMsg(m map[string]interface{}, msg string) {
 	
-	agentID,ok := m["AgentId"]
+	value,ok := m["AgentId"]
 	if false == ok {
 		fmt.Println("Lack of AgentId, add vdisk fail. Msg: ", string(msg))
 		return
 	}
+	agentID, ok := value.(string)
+	if false == ok {
+		fmt.Printf("AgentId type assertion fail")
+		return
+	}
 
-	vmId, ok := m["VmId"]
+	value, ok = m["VmId"]
 	if false == ok {
 		fmt.Printf("Lack of VmId, add vdisk fail. Msg:%s", string(msg))
 		return
 	}
+	vmId, ok := value.(string)
+	if false == ok {
+		fmt.Printf("VmId type assertion fail")
+		return
+	}
 
-	path, ok := m["Path"]
+	value, ok = m["Path"]
 	if false == ok {
 		fmt.Printf("Lack of Path, add vdisk fail. Msg:%s", string(msg))
 		return
 	}
+	path, ok := value.(string)
+	if false == ok {
+		fmt.Printf("Path type assertion fail")
+		return
+	}
 
-	addVdisk(agentID, vmId, path)
+	err := addVdisk(agentID, vmId, path)
+	if nil != err {
+		fmt.Println("Add vdisk fail")
+	}
 
+	fmt.Println("Add vdisk success")
 }
 
 func msgHandler(jsonMsg []byte) error{
@@ -79,6 +120,11 @@ func msgHandler(jsonMsg []byte) error{
 	var f interface{}
 
 	err := json.Unmarshal(jsonMsg, &f)
+	if nil != err {
+		s := fmt.Sprintf("Handle msg(%s) fail, err:", string(jsonMsg), err.Error())
+		return errors.New(s)
+	}
+
 	m := f.(map[string]interface{})
 
 	msgType, ok := m["MsgType"]
@@ -89,8 +135,8 @@ func msgHandler(jsonMsg []byte) error{
 
 	switch msgType {
 
-		case "REGISTE_AGENT":
-			handleRegisterAgentMsg(m, sting(jsonMsg))	
+		case "REGISTER_AGENT":
+			handleRegisterAgentMsg(m, string(jsonMsg))	
 
 		case "ADD_VDISK":
 			handleAddVdiskMsg(m, string(jsonMsg))
@@ -101,11 +147,11 @@ func msgHandler(jsonMsg []byte) error{
 		default:
 			fmt.Printf("Unrecognize msgType:%s", msgType)
 	}
-
+/*
 	for key, value := range m {
 		fmt.Printf("key:%s value:%s\n", key, value)
 	}
-
+*/
 	return nil
 }
 
@@ -120,7 +166,7 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 	
-		Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
+		//Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
 
 		msgHandler(buffer[:n])
 

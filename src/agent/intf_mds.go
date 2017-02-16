@@ -60,7 +60,7 @@ func sendMsgToMds() func(string) error{
 
 func sendRegisteAgentMsg() {
 	message := RegisterAgentMsg{
-		MsgType: "REGISTE_AGENT",
+		MsgType: "REGISTER_AGENT",
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
 		Id:       "100",
@@ -78,7 +78,7 @@ func sendRegisteAgentMsg() {
 
 func getAgentIdentifyInfo() string {
 	registerAgent := RegisterAgentMsg{
-		MsgType: "AGENT_HEAT_BEAT",
+		MsgType: "AGENT_HEART_BEAT",
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
 		Id:       "100",

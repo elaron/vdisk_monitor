@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"runtime"
+	//"runtime"
 	"os/exec"
 	"errors"
 )
@@ -116,7 +116,7 @@ func isAgentExist(agentList []Agent, agent Agent) (bool, string){
 	return false, ""
 }
 
-func addAgent(agentId string, ip string, hostname string) (bool, string){
+func addAgent(agentId string, ip string, hostname string) error{
 
 	agent := Agent{
 		BasicInfo: AgentBasicInfo {
@@ -127,37 +127,39 @@ func addAgent(agentId string, ip string, hostname string) (bool, string){
 		},
 	}
 
-	agentList, err := getAgentList()
+	agentList, _ := getAgentList()
 
-	agentExist, errMsg := isAgentExist(agentList, agent)
+	agentExist,msg := isAgentExist(agentList, agent)
 	if true == agentExist {
-		return false, errMsg
+		s := fmt.Sprintf("Add agent fail, because of %s", msg)
+		return errors.New(s)
 	}
 
-	err = createAgent(agent)
+	err := createAgent(agent)
 	if nil != err {
-		return false, "Add agent fail"
+		s := fmt.Sprintf("Create agent fail, Err: %s", err.Error())
+		return errors.New(s)
 	}
 
-	return true, ""
+	return nil
 }
 
-func removeAgent(agentID string) (bool, string){
+func removeAgent(agentID string) error{
 	
-	funcName, file, line, _ := runtime.Caller(0)
+	//funcName, file, line, _ := runtime.Caller(0)
 	
 	_, err := getAgent(agentID)
 	if nil != err {
-			return false, "Agnet not exist"
+		return errors.New("Agnet dose'n exist")
 	}
 
 	err = deleteAgent(agentID)
 	if nil != err {
-		fmt.Printf("[%s][%s][%d]Remove agent fail!, Err%q\n ", runtime.FuncForPC(funcName).Name(), file, line, err.Error())
-		return false, "Delete agent fail"
+		s := fmt.Sprintf("Delete agent fail, Err:%s", err.Error())
+		return errors.New(s)
 	}
 
-	return true,""
+	return nil
 }
 
 func isVdiskExistOnAgent(vdiskPath string, agent Agent) bool{

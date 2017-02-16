@@ -109,23 +109,22 @@ func case3_addAgent() error {
 
 	deleteAllAgents()
 
-	rslt, errMsg := addAgent(agentID, hostIp, hostname)
+	err := addAgent(agentID, hostIp, hostname)
 	
-	if rslt != true {
-		fmt.Println("Add agent fail, err:", errMsg)
-		return errors.New("Add agent fail!")
+	if nil != err {
+		return err
 	}
 
 	agentID = "102"
-	rslt, _ = addAgent(agentID, hostIp, hostname)
-	if rslt != false {
+	err = addAgent(agentID, hostIp, hostname)
+	if nil == err {
 		return errors.New("Detect duplicate AgentIP fail!")
 	}
 
 	agentID = "101"
 	hostIp = "10.25.26.47"
-	rslt, _ = addAgent(agentID, hostIp, hostname)
-	if rslt != false {
+	err = addAgent(agentID, hostIp, hostname)
+	if err == nil {
 		return errors.New("Detect duplicate AgentID fail!")
 	}
 
@@ -140,20 +139,18 @@ func case4_removeAgent() error {
 
 	deleteAllAgents()
 
-	rslt, errMsg := addAgent(agentID, hostIp, hostname)
-	
-	if rslt != true {
-		fmt.Println("Add agent fail, err:", errMsg)
-		return errors.New("Add agent fail!")
+	err := addAgent(agentID, hostIp, hostname)
+	if nil != err {
+		return err
 	}
 
-	rslt, errMsg = removeAgent("102")
-	if false != rslt {
+	err = removeAgent("102")
+	if nil == err {
 		return errors.New("Fail of detect non-exist agent")
 	}
 
-	rslt, errMsg = removeAgent("101")
-	if true != rslt {
+	err = removeAgent("101")
+	if nil != err {
 		return errors.New("Fail of removing agent")
 	}
 
@@ -169,14 +166,12 @@ func case5_addVdisk() error{
 	deleteAllAgents()
 	deleteAllVdisks()
 
-	rslt, errMsg := addAgent(agentID, hostIp, hostname)
-	
-	if rslt != true {
-		fmt.Println("Add agent fail, err:", errMsg)
-		return errors.New("Add agent fail!")
+	err := addAgent(agentID, hostIp, hostname)
+	if nil != err {
+		return err
 	}
 
-	err := addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
+	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
 	if nil != err {
 		return err
 	}
