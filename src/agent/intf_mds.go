@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"time"
 	"math/rand"
-	//"runtime"
 )
 
 type RegisterAgentMsg struct {
@@ -40,7 +40,27 @@ func connectMds() (net.Conn){
 	}
 
 	fmt.Println("connect success")
+
+	go listenFeedback(conn)
+
 	return conn
+}
+
+func listenFeedback(conn net.Conn) {
+	
+	buffer := make([]byte, 2048)
+
+	for {
+		n, err := conn.Read(buffer)
+		if err != nil {
+			Log(conn.RemoteAddr().String(), " connection error: ", err)
+			return
+		}
+	
+		Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
+
+		buffer = make([]byte, 2048)
+	}
 }
 
 func sendMsgToMds() func(string) error{
@@ -103,7 +123,7 @@ func heartbeatToMds() {
 		//runtime.Gosched()
 		sendHbMsg(info)
 		fmt.Println(info)
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 }
 
@@ -134,7 +154,12 @@ func sendAddVdiskMsgToMds() {
 		}
 
 		sendFunc(string(b))
+		fmt.Println(string(b))
+		
 		time.Sleep(3 * time.Second)
 	}
-	
+}
+
+func Log(v ...interface{}) {
+	log.Println(v...)
 }

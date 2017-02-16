@@ -27,132 +27,205 @@ func setuplistener() {
 	}
 }
 
-func handleRegisterAgentMsg(m map[string]interface{}, msg string) {
+func handleRegisterAgentMsg(m map[string]interface{}, msg string) (feedback string, err error){
 
 	value, ok := m["Hostname"]
 	if false == ok {
-		fmt.Printf("Lack of Hostname, register agent fail. Msg:%s", string(msg))
+		s := fmt.Sprintf("Lack of Hostname, register agent fail. Msg:%s", string(msg))
+		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 	hostName, ok := value.(string)
 	if false == ok {
-		fmt.Printf("Hostname type assertion fail")
+		s := fmt.Sprintf("Hostname type assertion fail")
+		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 
 	value, ok = m["Ip"]
 	if false == ok {
-		fmt.Printf("Lack of Ip, register agent fail. Msg:%s", string(msg))
+		s := fmt.Sprintf("Lack of Ip, register agent fail. Msg:%s", string(msg))
+		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 	hostIP, ok := value.(string)
 	if false == ok {
-		fmt.Printf("hostIP type assertion fail")
+		s := fmt.Sprintf("hostIP type assertion fail")
+		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
-
 
 	value, ok = m["Id"]
 	if false == ok {
-		fmt.Printf("Lack of Id, register agent fail. Msg:%s", string(msg))
+		s := fmt.Sprintf("Lack of Id, register agent fail. Msg:%s", string(msg))
+		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 	agentID, ok := value.(string)
 	if false == ok {
-		fmt.Printf("AgentId type assertion fail")
+		s := fmt.Sprintf("AgentId type assertion fail")
+		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 
 
-	err := addAgent(agentID, hostIP, hostName)
+	err = addAgent(agentID, hostIP, hostName)
 	if nil != err {
-		fmt.Println("Register agent fail!")
+		s := fmt.Sprintf("Register agent fail!")
+		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
+		err = errors.New(s)
+		return
 	}
 
 	fmt.Println("Register agent success")
+	
+	feedback = genCommonMsgFeedback("REGISTER_AGENT", "SUCCESS", "")
+	err = nil
+
+	return
 }
 
-func handleAddVdiskMsg(m map[string]interface{}, msg string) {
+func handleAddVdiskMsg(m map[string]interface{}, msg string) (feedback string, err error){
 	
 	value,ok := m["AgentId"]
 	if false == ok {
-		fmt.Println("Lack of AgentId, add vdisk fail. Msg: ", string(msg))
+		s := fmt.Sprintf("Lack of AgentId, add vdisk fail. Msg: ", string(msg))
+		feedback = genCommonMsgFeedback("ADD_VDISK", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 	agentID, ok := value.(string)
 	if false == ok {
-		fmt.Printf("AgentId type assertion fail")
+		s := fmt.Sprintf("AgentId type assertion fail")
+		feedback = genCommonMsgFeedback("ADD_VDISK", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 
 	value, ok = m["VmId"]
 	if false == ok {
-		fmt.Printf("Lack of VmId, add vdisk fail. Msg:%s", string(msg))
+		s := fmt.Sprintf("Lack of VmId, add vdisk fail. Msg:%s", string(msg))
+		feedback = genCommonMsgFeedback("ADD_VDISK", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 	vmId, ok := value.(string)
 	if false == ok {
-		fmt.Printf("VmId type assertion fail")
+		s := fmt.Sprintf("VmId type assertion fail")
+		feedback = genCommonMsgFeedback("ADD_VDISK", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 
 	value, ok = m["Path"]
 	if false == ok {
-		fmt.Printf("Lack of Path, add vdisk fail. Msg:%s", string(msg))
+		s := fmt.Sprintf("Lack of Path, add vdisk fail. Msg:%s", string(msg))
+		feedback = genCommonMsgFeedback("ADD_VDISK", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 	path, ok := value.(string)
 	if false == ok {
-		fmt.Printf("Path type assertion fail")
+		s := fmt.Sprintf("Path type assertion fail")
+		feedback = genCommonMsgFeedback("ADD_VDISK", "FAIL", s)
+		err = errors.New(s)
 		return
 	}
 
-	err := addVdisk(agentID, vmId, path)
+	err = addVdisk(agentID, vmId, path)
 	if nil != err {
+		feedback = genCommonMsgFeedback("ADD_VDISK", "FAIL", err.Error())
 		fmt.Println("Add vdisk fail")
+		return
 	}
 
 	fmt.Println("Add vdisk success")
+	feedback = genCommonMsgFeedback("ADD_VDISK", "SUCCESS", "")
+	err = nil
+	return
 }
 
-func msgHandler(jsonMsg []byte) error{
+func genCommonMsgFeedback(msgType string, opResult string, errMsg string) string{
+	
+	feedbackMsgType := fmt.Sprintf("%s_FEEDBACK", msgType)
+	fbkMsg := map[string]string {
+		"MsgType": feedbackMsgType,
+		"OpResult": opResult,
+		"Error": errMsg,
+	}
+
+	b, convertErr := json.Marshal(fbkMsg)
+	if nil != convertErr {
+		return ""
+	}
+
+	return string(b)
+}
+
+func msgHandler(jsonMsg []byte) (feedback string, err error){
 
 	var f interface{}
 
-	err := json.Unmarshal(jsonMsg, &f)
+	err = json.Unmarshal(jsonMsg, &f)
+	
 	if nil != err {
-		s := fmt.Sprintf("Handle msg(%s) fail, err:", string(jsonMsg), err.Error())
-		return errors.New(s)
+	
+		s := fmt.Sprintf("Handle msg(%s) fail, err:", string(jsonMsg), err.Error())	
+		err = errors.New(s)
+		feedback = genCommonMsgFeedback("UNKNOWN_MSG", "FAIL", s)
+		return 
 	}
 
 	m := f.(map[string]interface{})
 
 	msgType, ok := m["MsgType"]
 	if false == ok {
-		s := fmt.Sprintf("Msg dosen't has MsgType, msg:%s", string(jsonMsg))
-		return errors.New(s)
+		s := fmt.Sprintf("Msg dosen't has MsgType tag, msg:%s", string(jsonMsg))
+		err = errors.New(s)
+		feedback = genCommonMsgFeedback(msgType.(string), "FAIL", s)
+		return 
 	}
 
 	switch msgType {
 
 		case "REGISTER_AGENT":
-			handleRegisterAgentMsg(m, string(jsonMsg))	
+			feedback, err = handleRegisterAgentMsg(m, string(jsonMsg))	
 
 		case "ADD_VDISK":
-			handleAddVdiskMsg(m, string(jsonMsg))
+			//feedback, err = handleAddVdiskMsg(m, string(jsonMsg))
 
 		case "AGENT_HEART_BEAT":
 			fmt.Println(string(jsonMsg))
 
 		default:
-			fmt.Printf("Unrecognize msgType:%s", msgType)
+			s := fmt.Sprintf("Unrecognize msgType:%s", msgType)
+			err = errors.New(s)
+			fmt.Println(s)
+
+			feedback = genCommonMsgFeedback("UNKNOWN_MSG", "FAIL", s)
+
 	}
 /*
 	for key, value := range m {
 		fmt.Printf("key:%s value:%s\n", key, value)
 	}
 */
-	return nil
+	return 
+}
+
+func listenFeedback(conn net.Conn) {
+	
+}
+
+func sendFeedback(conn net.Conn, feedback string) {
+	
+	conn.Write([]byte(feedback))
 }
 
 func handleConnection(conn net.Conn) {
@@ -166,11 +239,14 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 	
-		//Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
-
-		msgHandler(buffer[:n])
+		Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
+		feedback, _ := msgHandler(buffer[:n])
 
 		buffer = make([]byte, 2048)
+
+		fmt.Println("Feedback:", feedback)
+		
+		//go sendFeedback(conn, feedback)
 	}
 }
 

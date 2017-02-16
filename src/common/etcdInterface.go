@@ -217,23 +217,29 @@ func GetDirectory() (func (key string) ([]string, error)) {
 	}
 }
 
-func WatchKey()(func (key string) error) {
+func WatchKey()(func (key string) (currentValue string, prevValue string ,err error)) {
 		
 	keyApi := getKeysAPI()
 
-	return func (key string) error {
+	return func (key string) (currentValue string, prevValue string ,err error) {
 		
 		//Watcher(key string, opts *WatcherOptions) Watcher
 		watcher := keyApi.Watcher(key, nil)
 
 		resp, err := watcher.Next(context.Background())
 		if err != nil {
-			return err
+			return 
 		}
-
+/*
 		fmt.Println("Watch response:", resp)
+		fmt.Printf("action:%s \n value:%s \n prevValue:%s\n",
+			resp.Action,
+			resp.Node.Value,
+			resp.PrevNode.Value)
+*/
+		currentValue = string(resp.Node.Value)
+		prevValue = string(resp.PrevNode.Value)
 
-		return nil
+		return 
 	}
-
 }

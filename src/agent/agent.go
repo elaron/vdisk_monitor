@@ -4,7 +4,7 @@ func main() {
 
 	sendRegisteAgentMsg()
 	
-	go heartbeatToMds()
+	//go heartbeatToMds()
 	go sendAddVdiskMsgToMds()
 
 	for {

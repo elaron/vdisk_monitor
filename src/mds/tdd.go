@@ -229,9 +229,14 @@ func case6_Watcher() error{
 
 	watchFunc := etcdIntf.WatchKey()
 
+	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
+	if nil != err {
+		return err
+	}
+
 	go watchFunc("/agents/101/primary_vdisks")
 
-	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
+	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk2.qcow2")
 	if nil != err {
 		return err
 	}
@@ -242,7 +247,7 @@ func case6_Watcher() error{
 func main() {
 	
 	var err error
-/*
+
 	err = case1_EtcdCRUD()
 	if nil != err {
 		fmt.Println("case1_EtcdCRUD --- Fail, ", err.Error())
@@ -278,7 +283,7 @@ func main() {
 	}else{
 		fmt.Println("case5_addVdisk --- Pass")
 	}
-	*/
+	
 	err = case6_Watcher()
 	if nil != err {
 		fmt.Println("case6_Watcher --- Fail, ", err.Error())
