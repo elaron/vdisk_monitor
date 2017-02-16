@@ -1,4 +1,4 @@
-package main
+package etcdIntf
 
 import (
 	"log"
@@ -31,7 +31,7 @@ func getKeysAPI () client.KeysAPI{
 	return kapi
 }
 
-func createKey() func(key string, value string) error{
+func CreateKey() func(key string, value string) error{
 	
 	keyApi := getKeysAPI()
 
@@ -53,7 +53,7 @@ func createKey() func(key string, value string) error{
 	}
 }
 
-func deleteKey() func(key string) error{
+func DeleteKey() func(key string) error{
 
 	// Delete removes a Node identified by the given key, optionally destroying
 	// all of its children as well. The caller may define a set of required
@@ -78,7 +78,7 @@ func deleteKey() func(key string) error{
 	}
 }
 
-func updateKey() func(key string, value string) error{
+func UpdateKey() func(key string, value string) error{
 	
 	keyApi := getKeysAPI()
 
@@ -103,7 +103,7 @@ func updateKey() func(key string, value string) error{
 	}
 }
 
-func setKey() func(key string, value string) error{
+func SetKey() func(key string, value string) error{
 	
 	keyApi := getKeysAPI()
 
@@ -129,7 +129,7 @@ func setKey() func(key string, value string) error{
 	}
 }
 
-func getKey() func(key string) (string, error){
+func GetKey() func(key string) (string, error){
 	
 	keyApi := getKeysAPI()
 
@@ -154,7 +154,7 @@ func getKey() func(key string) (string, error){
 	}
 }
 
-func deleteDirectory() func (key string) error{
+func DeleteDirectory() func (key string) error{
 	
 	keyApi := getKeysAPI()
 	
@@ -178,7 +178,7 @@ func deleteDirectory() func (key string) error{
 	}
 }
 
-func getDirectory() (func (key string) ([]string, error)) {
+func GetDirectory() (func (key string) ([]string, error)) {
 	
 	keyApi := getKeysAPI()
 

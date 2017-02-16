@@ -7,6 +7,7 @@ import (
 	"strings"
 	"errors"
 	"strconv"
+	"vdisk_monitor/src/common"
 )
 
 func formatInt32(n int32) string {
@@ -113,18 +114,18 @@ func setAgent(f func() (func(key string, value string) error), agent Agent) erro
 
 func createAgent(agent Agent) error {
 	
-	return setAgent(createKey, agent)
+	return setAgent(etcdIntf.CreateKey, agent)
 }
 
 func updateAgent(agent Agent) error{
 
-	return setAgent(updateKey, agent)
+	return setAgent(etcdIntf.UpdateKey, agent)
 }
 
 func deleteAgent(agentID string) error {
 
 	agentRootKey 	:= getAgentRootKey(agentID)	
-	deleteAgentFunc := deleteDirectory()
+	deleteAgentFunc := etcdIntf.DeleteDirectory()
 
 	err := deleteAgentFunc(agentRootKey)
 	if err != nil {
@@ -137,7 +138,7 @@ func deleteAgent(agentID string) error {
 
 func getAgent(agentID string) (Agent, error) {
 	
-	getAgentNodeValueFunc := getKey()
+	getAgentNodeValueFunc := etcdIntf.GetKey()
 	subNodePaths := getAgentSubNodesPaths(agentID)
 
 	var value [AGGENT_SUB_NODE_TYPE_BUTT]string
@@ -177,7 +178,7 @@ func getAgent(agentID string) (Agent, error) {
 
 func getAgentList() ([]Agent, error){
 	
-	getAgentListFunc := getDirectory()
+	getAgentListFunc := etcdIntf.GetDirectory()
 
 	agentKeyPaths, err := getAgentListFunc("/agents")
 	if nil != err {
@@ -205,7 +206,7 @@ func getAgentList() ([]Agent, error){
 
 func deleteAllAgents() error{
 
-	deleteAgentFunc := deleteDirectory()
+	deleteAgentFunc := etcdIntf.DeleteDirectory()
 
 	err := deleteAgentFunc("/agents")
 	if err != nil {
@@ -279,7 +280,7 @@ func setNodeValue(key string, obj interface{}) error{
 		return errors.New(s)
 	}
 
-	setValueFunc := setKey()
+	setValueFunc := etcdIntf.SetKey()
 
 	err = setValueFunc(key, string(value))
 	if nil != err {
@@ -315,7 +316,7 @@ func setVdiskBackupDaemonInfo(vdiskId string, daemonInfo SyncDaemon, bkpType BAC
 
 func getNodeOjb(key string) (obj interface{}, err error) {
 
-	getValueFunc := getKey()
+	getValueFunc := etcdIntf.GetKey()
 
 	value,err := getValueFunc(key)
 	if nil != err {
@@ -330,7 +331,7 @@ func getNodeOjb(key string) (obj interface{}, err error) {
 func getVdiskVmInfo(vdiskId string) (info VmInfomation, err error) {
 
 	key := getVdiskVmInfoKey(vdiskId)
-	getValueFunc := getKey()
+	getValueFunc := etcdIntf.GetKey()
 
 	value, err := getValueFunc(key)
 	if nil != err {
@@ -344,7 +345,7 @@ func getVdiskVmInfo(vdiskId string) (info VmInfomation, err error) {
 func getVdiskBackupInfo(vdiskId string, bkpType BACKUP_TYPE) (info VdiskBackupInfo, err error){
 
 	key := getVdiskBackupKey(vdiskId, bkpType)
-	getValueFunc := getKey()
+	getValueFunc := etcdIntf.GetKey()
 
 	value, err := getValueFunc(key)
 	if nil != err {
@@ -358,7 +359,7 @@ func getVdiskBackupInfo(vdiskId string, bkpType BACKUP_TYPE) (info VdiskBackupIn
 func getVdiskBackupDaemonInfo(vdiskId string, bkpType BACKUP_TYPE) (info SyncDaemon, err error){
 	
 	key := getVdiskBackupDaemonInfoKey(vdiskId, bkpType)
-	getValueFunc := getKey()
+	getValueFunc := etcdIntf.GetKey()
 
 	value, err := getValueFunc(key)
 	if nil != err {
@@ -398,7 +399,7 @@ func createVdisk(vdisk Vdisk) error{
 
 func deleteVdisk(vdiskId string) error{
 	
-	deleteKeyFunc := deleteDirectory()
+	deleteKeyFunc := etcdIntf.DeleteDirectory()
 	key := fmt.Sprintf("/vdisks/%s", vdiskId)
 
 	err := deleteKeyFunc(key)
@@ -412,7 +413,7 @@ func deleteVdisk(vdiskId string) error{
 
 func deleteAllVdisks() error{
 
-	deleteAgentFunc := deleteDirectory()
+	deleteAgentFunc := etcdIntf.DeleteDirectory()
 
 	err := deleteAgentFunc("/vdisks")
 	if err != nil {

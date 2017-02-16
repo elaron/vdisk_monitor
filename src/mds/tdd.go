@@ -6,11 +6,12 @@ import (
 	"bytes"
 	"errors"
 	"reflect"
+	"vdisk_monitor/src/common"
 )
 
 func case1_EtcdCRUD() error {
 
-	createEtcdValue, deleteEtcdValue, updateEtcdValue, getEtcdValue := createKey(), deleteKey(), updateKey(), getKey()
+	createEtcdValue, deleteEtcdValue, updateEtcdValue, getEtcdValue := etcdIntf.CreateKey(), etcdIntf.DeleteKey(), etcdIntf.UpdateKey(), etcdIntf.GetKey()
 
 	uuid := genUUID()
 	
