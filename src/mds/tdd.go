@@ -291,4 +291,7 @@ func main() {
 	}else{
 		fmt.Println("case6_Watcher --- Pass")
 	}
+
+	common.DeleteAllAgents()
+	common.DeleteAllVdisks()
 }

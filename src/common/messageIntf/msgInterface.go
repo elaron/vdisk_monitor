@@ -5,6 +5,7 @@ type RegisterAgentMsg struct {
 	Hostname string
 	Ip       string
 	Id       string
+	TcpServerPort uint32
 }
 
 type AddVdiskMsg struct {

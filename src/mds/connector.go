@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"vdisk_monitor/src/common/messageIntf"
+	"vdisk_monitor/src/common/dbConn"
 )
 
 func setuplistener() {
@@ -249,6 +250,46 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("Feedback:", feedback)
 		
 		go sendFeedback(conn, feedback)
+	}
+}
+
+func connectAgent(agentID string) (net.Conn){
+
+	agent, _ := common.GetAgent(agentID)
+	
+	server := fmt.Sprintf("%s:%d", agent.BasicInfo.HostIp, agent.BasicInfo.TcpServerPort)
+
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
+		os.Exit(1)
+	}
+
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println("connect success")
+
+	go listenFeedback(conn)
+
+	return conn
+}
+
+func sendMsgToMds(agentID string) func(string) error{
+	
+	conn := connectAgent(agentID)
+
+	return func(msg string) error {
+	
+		_,err := conn.Write([]byte(msg))
+
+		if  err != nil {
+			fmt.Println(err.Error())
+		}
+		return err
 	}
 }
 

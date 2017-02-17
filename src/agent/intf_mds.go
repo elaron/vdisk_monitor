@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"time"
@@ -11,28 +10,6 @@ import (
 	"math/rand"
 	"vdisk_monitor/src/common/messageIntf"
 )
-
-func connectMds() (net.Conn){
-
-	server := "127.0.0.1:8877"
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
-	}
-
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
-	}
-
-	fmt.Println("connect success")
-
-	go listenFeedback(conn)
-
-	return conn
-}
 
 func handleAddVdiskFbMsg(m map[string]string, fbMsg string) error{
 		
@@ -107,6 +84,28 @@ func listenFeedback(conn net.Conn) {
 	}
 }
 
+func connectMds() (net.Conn){
+
+	server := "127.0.0.1:8877"
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
+		os.Exit(1)
+	}
+
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println("connect success")
+
+	go listenFeedback(conn)
+
+	return conn
+}
+
 func sendMsgToMds() func(string) error{
 	
 	conn := connectMds()
@@ -126,8 +125,9 @@ func sendRegisteAgentMsg() {
 	message := messageIntf.RegisterAgentMsg{
 		MsgType: "REGISTER_AGENT",
 		Hostname: "aaa",
-		Ip:       "192.168.56.104",
-		Id:       "agent100",
+		Ip:       g_agentConfig.HostIp,
+		Id:       g_agentConfig.AgentId,
+		TcpServerPort: g_agentConfig.TcpServerPort,
 	}
 
 	msg, err := json.Marshal(message)
@@ -145,7 +145,8 @@ func getAgentIdentifyInfo() string {
 		MsgType: "AGENT_HEART_BEAT",
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
-		Id:       "agent100",
+		Id:       g_agentConfig.AgentId,
+		TcpServerPort: g_agentConfig.TcpServerPort,
 	}
 
 	msg, err := json.Marshal(registerAgent)
@@ -187,7 +188,7 @@ func sendAddVdiskMsgToMds() {
 
 		message := messageIntf.AddVdiskMsg{
 			MsgType: "ADD_VDISK",
-			AgentId: "agent100",
+			AgentId: g_agentConfig.AgentId,
 			VmId: vmName,
 			Path: path,
 		}
@@ -206,8 +207,4 @@ func sendAddVdiskMsgToMds() {
 		
 		time.Sleep(1 * time.Second)
 	}
-}
-
-func Log(v ...interface{}) {
-	log.Println(v...)
 }
