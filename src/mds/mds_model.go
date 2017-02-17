@@ -2,95 +2,10 @@ package main
 
 import (
 	"fmt"
-	//"runtime"
 	"os/exec"
 	"errors"
+	"vdisk_monitor/src/common/dbConn"
 )
-
-//define enums
-const (
-	ACTIVE = iota
-	LOSS_CONN
-	DAEMON_STATE_TYPE_BUTT
-)
-type DAEMON_STATE_TYPE int32
-
-const (
-	RUNNING = iota
-	PAUSE
-	STOP
-	MIGRATE
-	VM_STATE_TYPE_BUTT
-)
-type VM_STATE int32
-
-const (
-	ORIGINATOR = iota
-	TERMINATOR
-	SYNC_TYPE_BUTT
-)
-type SYNC_TYPE int32
-
-const (
-	NORMAL_SYNC = iota
-	INCREASE_SYNC
-	FULL_SYNC
-	BACKUP_STATE_BUTT
-)
-type BACKUP_STATE int32
-
-//define basic structure
-type AgentBasicInfo struct {
-	HostIp 		string
-	Hostname 	string
-	Id 			string
-	State 		DAEMON_STATE_TYPE
-}
-
-type Agent struct {
-	BasicInfo 		AgentBasicInfo
-	Primary_vdisks 	[]string
-	Secondary_vdisks []string
-}
-
-type SyncDaemon struct {
-	SyncType			SYNC_TYPE
-	Tcp_server_port		int32
-	LastWriteSeq		int64
-	State 				DAEMON_STATE_TYPE
-	LastHeartBeatTime	int64
-}
-
-type VdiskBackupInfo struct {
-	ResidentAgentID 	string
-	Path 				string
-	Size 				int64
-	BackupStatus 		BACKUP_STATE
-	SyncPercent 		int32
-}
-
-type VdiskBackup struct {
-	BackupInfo 		VdiskBackupInfo
-	SyncDaemonInfo	SyncDaemon
-}
-
-const (
-	PRIMARY_BACKUP = iota
-	SECONDARY_BACKUP
-	BACKUP_TYPE_BUTT
-)
-type BACKUP_TYPE int32
-
-type VmInfomation struct {
-	VmId 				string
-	VmState 			VM_STATE
-}
-
-type Vdisk struct {
-	Id 			string
-	VmInfo 		VmInfomation
-	Backups 	[BACKUP_TYPE_BUTT]VdiskBackup
- }
 
 func genUUID() string {
 
@@ -101,7 +16,7 @@ func genUUID() string {
 	return string(uuid[0:36])
 }
 
-func isAgentExist(agentList []Agent, agent Agent) (bool, string){
+func isAgentExist(agentList []common.Agent, agent common.Agent) (bool, string){
 
 	for _, item := range agentList {
 
@@ -118,24 +33,24 @@ func isAgentExist(agentList []Agent, agent Agent) (bool, string){
 
 func addAgent(agentId string, ip string, hostname string) error{
 
-	agent := Agent{
-		BasicInfo: AgentBasicInfo {
+	agent := common.Agent{
+		BasicInfo: common.AgentBasicInfo {
 			HostIp:     ip,
 			Hostname:   hostname,
 			Id:         agentId,
-			State: ACTIVE,
+			State: common.ACTIVE,
 		},
 	}
 
-	agentList, _ := getAgentList()
+	agentList, _ := common.GetAgentList()
 
-	agentExist,msg := isAgentExist(agentList, agent)
+	agentExist, msg := isAgentExist(agentList, agent)
 	if true == agentExist {
 		s := fmt.Sprintf("Add agent fail, because of %s", msg)
 		return errors.New(s)
 	}
 
-	err := createAgent(agent)
+	err := common.CreateAgent(agent)
 	if nil != err {
 		s := fmt.Sprintf("Create agent fail, Err: %s", err.Error())
 		return errors.New(s)
@@ -148,12 +63,12 @@ func removeAgent(agentID string) error{
 	
 	//funcName, file, line, _ := runtime.Caller(0)
 	
-	_, err := getAgent(agentID)
+	_, err := common.GetAgent(agentID)
 	if nil != err {
 		return errors.New("Agnet dose'n exist")
 	}
 
-	err = deleteAgent(agentID)
+	err = common.DeleteAgent(agentID)
 	if nil != err {
 		s := fmt.Sprintf("Delete agent fail, Err:%s", err.Error())
 		return errors.New(s)
@@ -162,7 +77,7 @@ func removeAgent(agentID string) error{
 	return nil
 }
 
-func isVdiskExistOnAgent(vdiskPath string, agent Agent) bool{
+func isVdiskExistOnAgent(vdiskPath string, agent common.Agent) bool{
 
 	if len(agent.Primary_vdisks) == 0 {
 		return false
@@ -170,7 +85,7 @@ func isVdiskExistOnAgent(vdiskPath string, agent Agent) bool{
 
 	for _, vdiskId := range agent.Primary_vdisks {
 
-		bkpInfo,_ := getVdiskBackupInfo(vdiskId, PRIMARY_BACKUP)
+		bkpInfo,_ := common.GetVdiskBackupInfo(vdiskId, common.PRIMARY_BACKUP)
 		if vdiskPath == bkpInfo.Path {
 			return true
 		}
@@ -179,50 +94,50 @@ func isVdiskExistOnAgent(vdiskPath string, agent Agent) bool{
 	return false
 }
 
-func addVdisk(agentID string, vmId string, path string) error{
+func addVdisk(agentID string, vmId string, path string) (string, error){
 	
-	agent,err := getAgent(agentID)
+	agent, err := common.GetAgent(agentID)
 	if nil != err {
 		s := fmt.Sprintf("Agent(%s) is not exist!")
-		return errors.New(s)
+		return "", errors.New(s)
 	}
 
-	vdiskExist := isVdiskExistOnAgent(path, agent)
-	if true == vdiskExist {
+	vdiskId, _ := getVdiskId(agentID, path)
+	if len(vdiskId) != 0 {
 		s := fmt.Sprintf("Vdisk(%s) already exist on agent!\n", path)
-		return errors.New(s)
+		return vdiskId, errors.New(s)
 	}
 
-	var vdisk Vdisk
+	var vdisk common.Vdisk
 
 	vdisk.Id = genUUID()
 	vdisk.VmInfo.VmId = vmId
-	vdisk.VmInfo.VmState = RUNNING
+	vdisk.VmInfo.VmState = common.RUNNING
 
-	vdisk.Backups[PRIMARY_BACKUP].BackupInfo.ResidentAgentID = agentID
-	vdisk.Backups[PRIMARY_BACKUP].BackupInfo.Path = path
+	vdisk.Backups[common.PRIMARY_BACKUP].BackupInfo.ResidentAgentID = agentID
+	vdisk.Backups[common.PRIMARY_BACKUP].BackupInfo.Path = path
 
-	vdisk.Backups[PRIMARY_BACKUP].SyncDaemonInfo.SyncType = ORIGINATOR
+	vdisk.Backups[common.PRIMARY_BACKUP].SyncDaemonInfo.SyncType = common.ORIGINATOR
 
-	err = createVdisk(vdisk)
+	err = common.CreateVdisk(vdisk)
 	if nil != err {
 		s := fmt.Sprintf("Create vdisk fail! Add vdisk(%s) on agent(%s) fail!", path, agentID)
-		return errors.New(s)
+		return vdisk.Id, errors.New(s)
 	}
 	agent.Primary_vdisks = append(agent.Primary_vdisks, vdisk.Id)
 
-	err = updateAgent(agent)
+	err = common.UpdateAgent(agent)
 	if nil != err {
 		s := fmt.Sprintf("Update agent(%s) fail, add vdisk(%s) fail!", agentID, path)
-		return errors.New(s)
+		return vdisk.Id, errors.New(s)
 	}
 	
-	return err
+	return vdisk.Id, nil
 }
 
 func getVdiskId(agentID string, path string) (string, error){
 	
-	agent,err := getAgent(agentID)
+	agent,err := common.GetAgent(agentID)
 	if nil != err {
 		s := fmt.Sprintf("Get vdiskId(path=%s) fail, because get agent(%s) fail", path, agentID)
 		return "", errors.New(s)
@@ -230,7 +145,7 @@ func getVdiskId(agentID string, path string) (string, error){
 
 	for _, vdiskId := range agent.Primary_vdisks {
 
-		bkpInfo,_ := getVdiskBackupInfo(vdiskId, PRIMARY_BACKUP)
+		bkpInfo,_ := common.GetVdiskBackupInfo(vdiskId, common.PRIMARY_BACKUP)
 		
 		if path == bkpInfo.Path {
 			return vdiskId, nil
@@ -256,6 +171,6 @@ func removeVdisk(vdiskID string, agentID string, path string) error{
 		rmvVdiskID = vdiskID
 	}
 
-	err = deleteVdisk(rmvVdiskID)
+	err = common.DeleteVdisk(rmvVdiskID)
 	return err
 }

@@ -7,22 +7,10 @@ import (
 	"net"
 	"os"
 	"time"
+	"errors"
 	"math/rand"
+	"vdisk_monitor/src/common/messageIntf"
 )
-
-type RegisterAgentMsg struct {
-	MsgType	 string
-	Hostname string
-	Ip       string
-	Id       string
-}
-
-type AddVdiskMsg struct {
-	MsgType string
-	AgentId string
-	VmId string
-	Path string
-}
 
 func connectMds() (net.Conn){
 
@@ -44,6 +32,33 @@ func connectMds() (net.Conn){
 	go listenFeedback(conn)
 
 	return conn
+}
+
+func feedbackMsgHandler(fbMsg string) error {
+	
+	var m map[string]string
+	
+	err := json.Unmarshal([]byte(fbMsg), &m)
+	if nil != err {
+		s := fmt.Sprintf("Handle feedback msg fail, Err:%s", err.Error())
+		return errors.New(s)
+	}
+
+	feedBackType, ok := m["MsgType"]
+	if false == ok {
+		s := fmt.Sprintf("Message lack of MsgType tag, cannot be handled! Msg(%s)", fbMsg)
+		return errors.New(s)
+	}
+
+	switch feedBackType {
+		case "ADD_VDISK_FEEDBACK":
+
+		case "REGISTER_AGENT_FEEDBACK":
+		default:
+			fmt.Println(fbMsg)
+	}
+
+	return nil
 }
 
 func listenFeedback(conn net.Conn) {
@@ -79,7 +94,7 @@ func sendMsgToMds() func(string) error{
 }
 
 func sendRegisteAgentMsg() {
-	message := RegisterAgentMsg{
+	message := messageIntf.RegisterAgentMsg{
 		MsgType: "REGISTER_AGENT",
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
@@ -97,7 +112,7 @@ func sendRegisteAgentMsg() {
 }
 
 func getAgentIdentifyInfo() string {
-	registerAgent := RegisterAgentMsg{
+	registerAgent := messageIntf.RegisterAgentMsg{
 		MsgType: "AGENT_HEART_BEAT",
 		Hostname: "aaa",
 		Ip:       "192.168.56.104",
@@ -141,7 +156,7 @@ func sendAddVdiskMsgToMds() {
 		vmName := fmt.Sprintf("vm_case%d", vmIdx)
 		path := fmt.Sprintf("/root/wyd/case%d/vdisk_%d.qcow2", vmIdx, pathIdx)
 
-		message := AddVdiskMsg{
+		message := messageIntf.AddVdiskMsg{
 			MsgType: "ADD_VDISK",
 			AgentId: "agent100",
 			VmId: vmName,

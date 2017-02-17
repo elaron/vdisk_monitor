@@ -6,7 +6,8 @@ import (
 	"bytes"
 	"errors"
 	"reflect"
-	"vdisk_monitor/src/common"
+	"vdisk_monitor/src/common/etcdInterface"
+	"vdisk_monitor/src/common/dbConn"
 )
 
 func case1_EtcdCRUD() error {
@@ -48,9 +49,9 @@ func case1_EtcdCRUD() error {
 	return nil
 }
 
-func compareAgent(srcAgent Agent, agentID string) error{
+func compareAgent(srcAgent common.Agent, agentID string) error{
 	
-	agentTest, err := getAgent(agentID)
+	agentTest, err := common.GetAgent(agentID)
 	if err != nil {
 		return errors.New("Get agent fail")
 	}
@@ -66,17 +67,17 @@ func compareAgent(srcAgent Agent, agentID string) error{
 func case2_AgentCRUD() error {
 
 	var agentID string = "101"
-	agent := Agent{
-		BasicInfo: AgentBasicInfo {
+	agent := common.Agent{
+		BasicInfo: common.AgentBasicInfo {
 			HostIp:     "10.25.26.46",
 			Hostname:   "agent100",
 			Id:         agentID,
 		},
 	}
 
-	deleteAgent(agentID)
+	common.DeleteAgent(agentID)
 
-	err := createAgent(agent)
+	err := common.CreateAgent(agent)
 	if err != nil {
 		return errors.New("Add agent fail!!!!")
 	}
@@ -86,9 +87,9 @@ func case2_AgentCRUD() error {
 		return err
 	}
 	
-	agent.BasicInfo.State = LOSS_CONN
+	agent.BasicInfo.State = common.LOSS_CONN
 
-	err = updateAgent(agent)
+	err = common.UpdateAgent(agent)
 	if nil != err {
 		fmt.Printf("Update agent fail! Err:%s", err.Error())
 		return errors.New("Update agent fail")
@@ -108,7 +109,7 @@ func case3_addAgent() error {
 	hostIp := "10.25.26.46"
 	hostname := "agent100"
 
-	deleteAllAgents()
+	common.DeleteAllAgents()
 
 	err := addAgent(agentID, hostIp, hostname)
 	
@@ -138,7 +139,7 @@ func case4_removeAgent() error {
 	hostIp := "10.25.26.46"
 	hostname := "agent100"
 
-	deleteAllAgents()
+	common.DeleteAllAgents()
 
 	err := addAgent(agentID, hostIp, hostname)
 	if nil != err {
@@ -164,20 +165,20 @@ func case5_addVdisk() error{
 	hostIp := "10.25.26.46"
 	hostname := "agent100"
 
-	deleteAllAgents()
-	deleteAllVdisks()
+	common.DeleteAllAgents()
+	common.DeleteAllVdisks()
 
 	err := addAgent(agentID, hostIp, hostname)
 	if nil != err {
 		return err
 	}
 
-	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
+	_, err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
 	if nil != err {
 		return err
 	}
 
-	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
+	_, err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
 	if nil == err {
 		s := fmt.Sprintf("Fail of detecting duplicate vdisk!")
 		return errors.New(s)
@@ -189,7 +190,7 @@ func case5_addVdisk() error{
 	for i := 0; i < loopCnt; i++ {
 		path := fmt.Sprintf("root/case5/vdisk%d.qcow2", i)
 
-		err := addVdisk("101", "vm_case5", path)
+		_, err := addVdisk("101", "vm_case5", path)
 		if nil != err {
 			return err
 		}
@@ -219,8 +220,8 @@ func case6_Watcher() error{
 	hostIp := "10.25.26.46"
 	hostname := "agent100"
 
-	deleteAllAgents()
-	deleteAllVdisks()
+	common.DeleteAllAgents()
+	common.DeleteAllVdisks()
 
 	err := addAgent(agentID, hostIp, hostname)
 	if nil != err {
@@ -229,14 +230,14 @@ func case6_Watcher() error{
 
 	watchFunc := etcdIntf.WatchKey()
 
-	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
+	_, err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
 	if nil != err {
 		return err
 	}
 
 	go watchFunc("/agents/101/primary_vdisks")
 
-	err = addVdisk("101", "vm_case5", "root/case5/os_vdisk2.qcow2")
+	_, err = addVdisk("101", "vm_case5", "root/case5/os_vdisk2.qcow2")
 	if nil != err {
 		return err
 	}

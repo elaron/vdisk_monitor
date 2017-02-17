@@ -138,7 +138,7 @@ func handleAddVdiskMsg(m map[string]interface{}, msg string) (feedback string, e
 		return
 	}
 
-	err = addVdisk(agentID, vmId, path)
+	vdiskId, err := addVdisk(agentID, vmId, path)
 	if nil != err {
 		feedback = genCommonMsgFeedback("ADD_VDISK", "FAIL", err.Error())
 		fmt.Println("Add vdisk fail")
@@ -146,18 +146,18 @@ func handleAddVdiskMsg(m map[string]interface{}, msg string) (feedback string, e
 	}
 
 	fmt.Println("Add vdisk success")
-	feedback = genCommonMsgFeedback("ADD_VDISK", "SUCCESS", "")
+	feedback = genCommonMsgFeedback("ADD_VDISK", "SUCCESS", vdiskId)
 	err = nil
 	return
 }
 
-func genCommonMsgFeedback(msgType string, opResult string, errMsg string) string{
+func genCommonMsgFeedback(msgType string, opResult string, msgBody string) string{
 	
 	feedbackMsgType := fmt.Sprintf("%s_FEEDBACK", msgType)
 	fbkMsg := map[string]string {
 		"MsgType": feedbackMsgType,
 		"OpResult": opResult,
-		"Error": errMsg,
+		"Body": msgBody,
 	}
 
 	b, convertErr := json.Marshal(fbkMsg)

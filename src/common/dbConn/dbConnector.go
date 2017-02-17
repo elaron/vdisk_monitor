@@ -1,4 +1,4 @@
-package main
+package common
 	
 import (
 	"fmt"
@@ -7,18 +7,102 @@ import (
 	"strings"
 	"errors"
 	"strconv"
-	"vdisk_monitor/src/common"
+	"vdisk_monitor/src/common/etcdInterface"
 )
 
 func formatInt32(n int32) string {
     return strconv.FormatInt(int64(n), 10)
 }
+//define enums
+const (
+	ACTIVE = iota
+	LOSS_CONN
+	DAEMON_STATE_TYPE_BUTT
+)
+type DAEMON_STATE_TYPE int32
+
+const (
+	RUNNING = iota
+	PAUSE
+	STOP
+	MIGRATE
+	VM_STATE_TYPE_BUTT
+)
+type VM_STATE int32
+
+const (
+	ORIGINATOR = iota
+	TERMINATOR
+	SYNC_TYPE_BUTT
+)
+type SYNC_TYPE int32
+
+const (
+	NORMAL_SYNC = iota
+	INCREASE_SYNC
+	FULL_SYNC
+	BACKUP_STATE_BUTT
+)
+type BACKUP_STATE int32
+
+//define basic structure
+type AgentBasicInfo struct {
+	HostIp 		string
+	Hostname 	string
+	Id 			string
+	State 		DAEMON_STATE_TYPE
+}
+
+type Agent struct {
+	BasicInfo 		AgentBasicInfo
+	Primary_vdisks 	[]string
+	Secondary_vdisks []string
+}
+
+type SyncDaemon struct {
+	SyncType			SYNC_TYPE
+	Tcp_server_port		int32
+	LastWriteSeq		int64
+	State 				DAEMON_STATE_TYPE
+	LastHeartBeatTime	int64
+}
+
+type VdiskBackupInfo struct {
+	ResidentAgentID 	string
+	Path 				string
+	Size 				int64
+	BackupStatus 		BACKUP_STATE
+	SyncPercent 		int32
+}
+
+type VdiskBackup struct {
+	BackupInfo 		VdiskBackupInfo
+	SyncDaemonInfo	SyncDaemon
+}
+
+const (
+	PRIMARY_BACKUP = iota
+	SECONDARY_BACKUP
+	BACKUP_TYPE_BUTT
+)
+type BACKUP_TYPE int32
+
+type VmInfomation struct {
+	VmId 				string
+	VmState 			VM_STATE
+}
+
+type Vdisk struct {
+	Id 			string
+	VmInfo 		VmInfomation
+	Backups 	[BACKUP_TYPE_BUTT]VdiskBackup
+ }
 
 //Agent structure
 //--agent
 //    |_agentID
 //         |_basicInfo
-//         |_primary_vdisks
+//         |_primary_vdisks#
 //         |_secondary_vdisks
 
 //----Begin Agent CRUD----
@@ -88,7 +172,7 @@ func getAgentSubNodeValues(agent Agent) ([AGGENT_SUB_NODE_TYPE_BUTT]string, erro
 	return subNodeValues, nil
 }
 
-func setAgent(f func() (func(key string, value string) error), agent Agent) error{
+func SetAgent(f func() (func(key string, value string) error), agent Agent) error{
 	
 	nodeValues, err := getAgentSubNodeValues(agent)
 	if err != nil {
@@ -112,17 +196,17 @@ func setAgent(f func() (func(key string, value string) error), agent Agent) erro
 	return nil
 }
 
-func createAgent(agent Agent) error {
+func CreateAgent(agent Agent) error {
 	
-	return setAgent(etcdIntf.CreateKey, agent)
+	return SetAgent(etcdIntf.CreateKey, agent)
 }
 
-func updateAgent(agent Agent) error{
+func UpdateAgent(agent Agent) error{
 
-	return setAgent(etcdIntf.UpdateKey, agent)
+	return SetAgent(etcdIntf.UpdateKey, agent)
 }
 
-func deleteAgent(agentID string) error {
+func DeleteAgent(agentID string) error {
 
 	agentRootKey 	:= getAgentRootKey(agentID)	
 	deleteAgentFunc := etcdIntf.DeleteDirectory()
@@ -136,7 +220,7 @@ func deleteAgent(agentID string) error {
 	 return nil
 }
 
-func getAgent(agentID string) (Agent, error) {
+func GetAgent(agentID string) (Agent, error) {
 	
 	getAgentNodeValueFunc := etcdIntf.GetKey()
 	subNodePaths := getAgentSubNodesPaths(agentID)
@@ -176,7 +260,7 @@ func getAgent(agentID string) (Agent, error) {
 	return agent, nil
 }
 
-func getAgentList() ([]Agent, error){
+func GetAgentList() ([]Agent, error){
 	
 	getAgentListFunc := etcdIntf.GetDirectory()
 
@@ -193,7 +277,7 @@ func getAgentList() ([]Agent, error){
 		strArr := strings.Split(path, "/")
 		agentID := strArr[len(strArr) - 1]
 
-		agent,err := getAgent(agentID)
+		agent,err := GetAgent(agentID)
 		if nil != err {
 			continue
 		}
@@ -204,7 +288,7 @@ func getAgentList() ([]Agent, error){
 	return agentList, err
 }
 
-func deleteAllAgents() error{
+func DeleteAllAgents() error{
 
 	deleteAgentFunc := etcdIntf.DeleteDirectory()
 
@@ -290,7 +374,7 @@ func setNodeValue(key string, obj interface{}) error{
 	return nil	
 }
 
-func setVdiskVmInfo(vdiskId string, info VmInfomation) error{
+func SetVdiskVmInfo(vdiskId string, info VmInfomation) error{
 	
 	key := getVdiskVmInfoKey(vdiskId)
 	err := setNodeValue(key, info)
@@ -298,7 +382,7 @@ func setVdiskVmInfo(vdiskId string, info VmInfomation) error{
 	return err
 }
 
-func setVdiskBackupInfo(vdiskId string, bkp VdiskBackupInfo, bkpType BACKUP_TYPE) error{
+func SetVdiskBackupInfo(vdiskId string, bkp VdiskBackupInfo, bkpType BACKUP_TYPE) error{
 	
 	key := getVdiskBackupKey(vdiskId, bkpType)
 	err := setNodeValue(key, bkp)
@@ -306,7 +390,7 @@ func setVdiskBackupInfo(vdiskId string, bkp VdiskBackupInfo, bkpType BACKUP_TYPE
 	return err
 }
 
-func setVdiskBackupDaemonInfo(vdiskId string, daemonInfo SyncDaemon, bkpType BACKUP_TYPE) error{
+func SetVdiskBackupDaemonInfo(vdiskId string, daemonInfo SyncDaemon, bkpType BACKUP_TYPE) error{
 
 	key := getVdiskBackupDaemonInfoKey(vdiskId, bkpType)
 	err := setNodeValue(key, daemonInfo)
@@ -328,7 +412,7 @@ func getNodeOjb(key string) (obj interface{}, err error) {
 	return
 }
 
-func getVdiskVmInfo(vdiskId string) (info VmInfomation, err error) {
+func GetVdiskVmInfo(vdiskId string) (info VmInfomation, err error) {
 
 	key := getVdiskVmInfoKey(vdiskId)
 	getValueFunc := etcdIntf.GetKey()
@@ -342,7 +426,7 @@ func getVdiskVmInfo(vdiskId string) (info VmInfomation, err error) {
 	return
 }
 
-func getVdiskBackupInfo(vdiskId string, bkpType BACKUP_TYPE) (info VdiskBackupInfo, err error){
+func GetVdiskBackupInfo(vdiskId string, bkpType BACKUP_TYPE) (info VdiskBackupInfo, err error){
 
 	key := getVdiskBackupKey(vdiskId, bkpType)
 	getValueFunc := etcdIntf.GetKey()
@@ -356,7 +440,7 @@ func getVdiskBackupInfo(vdiskId string, bkpType BACKUP_TYPE) (info VdiskBackupIn
 	return
 }
 
-func getVdiskBackupDaemonInfo(vdiskId string, bkpType BACKUP_TYPE) (info SyncDaemon, err error){
+func GetVdiskBackupDaemonInfo(vdiskId string, bkpType BACKUP_TYPE) (info SyncDaemon, err error){
 	
 	key := getVdiskBackupDaemonInfoKey(vdiskId, bkpType)
 	getValueFunc := etcdIntf.GetKey()
@@ -370,11 +454,11 @@ func getVdiskBackupDaemonInfo(vdiskId string, bkpType BACKUP_TYPE) (info SyncDae
 	return
 }
 
-func createVdisk(vdisk Vdisk) error{
+func CreateVdisk(vdisk Vdisk) error{
 	
 	var err error
 
-	err = setVdiskVmInfo(vdisk.Id, vdisk.VmInfo)
+	err = SetVdiskVmInfo(vdisk.Id, vdisk.VmInfo)
 	if nil != err {
 		return err
 	}
@@ -383,12 +467,12 @@ func createVdisk(vdisk Vdisk) error{
 
 	for ; bkpType < BACKUP_TYPE_BUTT; bkpType++ {
 	
-		err = setVdiskBackupInfo(vdisk.Id, vdisk.Backups[bkpType].BackupInfo, bkpType)
+		err = SetVdiskBackupInfo(vdisk.Id, vdisk.Backups[bkpType].BackupInfo, bkpType)
 		if nil != err {
 			return err
 		}
 		
-		err = setVdiskBackupDaemonInfo(vdisk.Id, vdisk.Backups[bkpType].SyncDaemonInfo, bkpType)
+		err = SetVdiskBackupDaemonInfo(vdisk.Id, vdisk.Backups[bkpType].SyncDaemonInfo, bkpType)
 		if nil != err {
 			return err
 		}		
@@ -397,7 +481,7 @@ func createVdisk(vdisk Vdisk) error{
 	return nil
 }
 
-func deleteVdisk(vdiskId string) error{
+func DeleteVdisk(vdiskId string) error{
 	
 	deleteKeyFunc := etcdIntf.DeleteDirectory()
 	key := fmt.Sprintf("/vdisks/%s", vdiskId)
@@ -411,7 +495,7 @@ func deleteVdisk(vdiskId string) error{
 	return nil
 }
 
-func deleteAllVdisks() error{
+func DeleteAllVdisks() error{
 
 	deleteAgentFunc := etcdIntf.DeleteDirectory()
 
