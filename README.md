@@ -16,6 +16,8 @@ Notes & References:
 
 [goroutine工作原理](https://www.zhihu.com/question/20862617)
 
+[go interface](http://jordanorelli.com/post/32665860244/how-to-use-interfaces-in-go)
+
 [non-blocking-channel & select](https://gobyexample.com/non-blocking-channel-operations)
 
 [timer](https://gobyexample.com/timers)
