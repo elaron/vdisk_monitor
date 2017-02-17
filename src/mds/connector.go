@@ -7,6 +7,7 @@ import (
 	"os"
 	"encoding/json"
 	"errors"
+	"vdisk_monitor/src/common/messageIntf"
 )
 
 func setuplistener() {
@@ -154,13 +155,14 @@ func handleAddVdiskMsg(m map[string]interface{}, msg string) (feedback string, e
 func genCommonMsgFeedback(msgType string, opResult string, msgBody string) string{
 	
 	feedbackMsgType := fmt.Sprintf("%s_FEEDBACK", msgType)
-	fbkMsg := map[string]string {
-		"MsgType": feedbackMsgType,
-		"OpResult": opResult,
-		"Body": msgBody,
+	
+	fbMsg := messageIntf.FeedbackMsg{
+		MsgType: feedbackMsgType,
+		OpResult: opResult,
+		Body: msgBody,
 	}
 
-	b, convertErr := json.Marshal(fbkMsg)
+	b, convertErr := json.Marshal(fbMsg)
 	if nil != convertErr {
 		return ""
 	}

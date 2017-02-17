@@ -34,6 +34,30 @@ func connectMds() (net.Conn){
 	return conn
 }
 
+func handleAddVdiskFbMsg(m map[string]string, fbMsg string) error{
+		
+	opResult, ok := m["OpResult"]
+	if false == ok {
+		s := fmt.Sprintf("Feedback message lack of OpResult tag! Msg(%s)", fbMsg)
+		return errors.New(s)
+	}
+
+	msgBody, ok := m["Body"]
+	if false == ok {
+		s := fmt.Sprintf("Feedback message lack of body! Msg(%s)", fbMsg)
+		return errors.New(s)
+	}
+
+	if "FAIL" == opResult {
+		s := fmt.Sprintf("Add vdisk fail! Err:%s", msgBody)
+		return errors.New(s)
+	}
+
+	vdiskId := msgBody
+	startOriginator(vdiskId)
+	return nil
+}
+
 func feedbackMsgHandler(fbMsg string) error {
 	
 	var m map[string]string
@@ -52,8 +76,11 @@ func feedbackMsgHandler(fbMsg string) error {
 
 	switch feedBackType {
 		case "ADD_VDISK_FEEDBACK":
+			handleAddVdiskFbMsg(m,fbMsg)
 
 		case "REGISTER_AGENT_FEEDBACK":
+			fmt.Println(fbMsg)
+
 		default:
 			fmt.Println(fbMsg)
 	}
@@ -72,7 +99,9 @@ func listenFeedback(conn net.Conn) {
 			return
 		}
 	
-		Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
+		//Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
+
+		feedbackMsgHandler(string(buffer[:n]))
 
 		buffer = make([]byte, 2048)
 	}

@@ -13,3 +13,9 @@ type AddVdiskMsg struct {
 	VmId string
 	Path string
 }
+
+type FeedbackMsg struct {
+	MsgType string
+	OpResult string	//SUCCESS/FAIL
+	Body string
+}
