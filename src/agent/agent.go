@@ -24,13 +24,8 @@ func main() {
 
 	initAgentConfig()
 	sendRegisteAgentMsg()
-
-	go watchVdiskChange(g_agentConfig.AgentId, common.PRIMARY_BACKUP)
-	go watchVdiskChange(g_agentConfig.AgentId, common.SECONDARY_BACKUP)
 	
 	//go heartbeatToMds()
-	go sendAddVdiskMsgToMds()
-	go setuplistener()
 
 	for {
         time.Sleep(60 * time.Second)
@@ -57,6 +52,14 @@ func initAgentConfig() {
 	g_agentConfig.PortRange[1] = 40000
 
 	g_agentConfig.CurrPort = g_agentConfig.PortRange[0]
+}
+
+func runAgent() {
+	go watchVdiskChange(g_agentConfig.AgentId, common.PRIMARY_BACKUP)
+	go watchVdiskChange(g_agentConfig.AgentId, common.SECONDARY_BACKUP)
+
+	go sendAddVdiskMsgToMds()
+	go setuplistener()
 }
 
 func getAvailablePort(num uint8) ([]uint32, error) {
@@ -126,18 +129,23 @@ func watchVdiskChange(agentId string, bkpType common.BACKUP_TYPE) {
 	
 	for {
 		addVdisks, rmvVdisks, err := common.WatchVdiskList(agentId, bkpType)
+
+		fmt.Println("Vdisklist change")
+
 		if err != nil {
 			list := []string{"primary_vdisks", "secondary_vdisks"}
 			fmt.Printf("Stop watching %s vdisk list\n", list[bkpType])
-			break
+			continue
 		}
 
 		for _,vdiskId := range addVdisks {
 			startSync(vdiskId, bkpType)
+			fmt.Printf("Start new vdisk %s\n", vdiskId)
 		}
 
 		for _,vdiskId := range rmvVdisks {
 			removeSync(vdiskId, bkpType)
+			fmt.Printf("Remove vdisk %s\n", vdiskId)
 		}
 	}
 }

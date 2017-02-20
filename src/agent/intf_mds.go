@@ -50,6 +50,11 @@ func feedbackMsgHandler(fbMsg string) error {
 		s := fmt.Sprintf("Message lack of MsgType tag, cannot be handled! Msg(%s)", fbMsg)
 		return errors.New(s)
 	}
+	opResult, ok := m["OpResult"]
+	if false == ok {
+		s := fmt.Sprintf("Message lack of OpResult tag, cannot be handled! Msg(%s)", fbMsg)
+		return errors.New(s)
+	}
 
 	switch feedBackType {
 		case "ADD_VDISK_FEEDBACK":
@@ -57,8 +62,14 @@ func feedbackMsgHandler(fbMsg string) error {
 			fmt.Println(fbMsg)
 
 		case "REGISTER_AGENT_FEEDBACK":
-			fmt.Println(fbMsg)
+			
+			if opResult == "SUCCESS" {
+				runAgent()
 
+			}else {
+				fmt.Println(fbMsg)	
+			}
+			
 		default:
 			fmt.Println(fbMsg)
 	}
@@ -207,6 +218,6 @@ func sendAddVdiskMsgToMds() {
 		}
 		fmt.Println(string(b))
 		
-		time.Sleep(1 * time.Second)
+		time.Sleep(30 * time.Second)
 	}
 }
