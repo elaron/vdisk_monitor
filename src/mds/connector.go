@@ -33,7 +33,7 @@ func handleRegisterAgentMsg(m map[string]interface{}, msg string) (feedback stri
 
 	value, ok := m["Hostname"]
 	if false == ok {
-		s := fmt.Sprintf("Lack of Hostname, register agent fail. Msg:%s", string(msg))
+		s := fmt.Sprintf("Lack of Hostname, register agent fail. Msg:%s", msg)
 		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
 		err = errors.New(s)
 		return
@@ -48,7 +48,7 @@ func handleRegisterAgentMsg(m map[string]interface{}, msg string) (feedback stri
 
 	value, ok = m["Ip"]
 	if false == ok {
-		s := fmt.Sprintf("Lack of Ip, register agent fail. Msg:%s", string(msg))
+		s := fmt.Sprintf("Lack of Ip, register agent fail. Msg:%s", msg)
 		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
 		err = errors.New(s)
 		return
@@ -63,7 +63,7 @@ func handleRegisterAgentMsg(m map[string]interface{}, msg string) (feedback stri
 
 	value, ok = m["Id"]
 	if false == ok {
-		s := fmt.Sprintf("Lack of Id, register agent fail. Msg:%s", string(msg))
+		s := fmt.Sprintf("Lack of Id, register agent fail. Msg:%s", msg)
 		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
 		err = errors.New(s)
 		return
@@ -76,7 +76,6 @@ func handleRegisterAgentMsg(m map[string]interface{}, msg string) (feedback stri
 		return
 	}
 
-
 	err = addAgent(agentID, hostIP, hostName)
 	if nil != err {
 		s := fmt.Sprintf("Register agent fail!")
@@ -85,12 +84,78 @@ func handleRegisterAgentMsg(m map[string]interface{}, msg string) (feedback stri
 		return
 	}
 
+	value, ok = m["PeerAgentId"]
+	if true == ok {
+		peerAgentID, ok := value.(string)
+		if false == ok {
+			s := fmt.Sprintf("peerAgentID type assertion fail")
+			feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
+			err = errors.New(s)
+			return
+		}
+		err = setPeerAgent(agentID, peerAgentID)
+		if nil != err {
+			s := fmt.Sprintf("Set peer-agent Id fail. Msg(%s)", msg)
+			feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
+			err = errors.New(s)
+			return
+		}
+	}	
+
 	fmt.Println("Register agent success")
 	
 	feedback = genCommonMsgFeedback("REGISTER_AGENT", "SUCCESS", "")
 	err = nil
 
 	return
+}
+
+func handleSetPeerMsg(m map[string]interface{}, msg string) (feedback string, err error) {
+	
+	value,ok := m["AgentId"]
+	if false == ok {
+		s := fmt.Sprintf("Lack of AgentId, set peer-agent fail. Msg: ", string(msg))
+		feedback = genCommonMsgFeedback("SET_PEER", "FAIL", s)
+		err = errors.New(s)
+		return
+	}
+
+	agentID, ok := value.(string)
+	if false == ok {
+		s := fmt.Sprintf("AgentId type assertion fail")
+		feedback = genCommonMsgFeedback("SET_PEER", "FAIL", s)
+		err = errors.New(s)
+		return
+	}
+
+	value, ok = m["PeerAgentId"]
+	if false == ok {
+		s := fmt.Sprintf("Lack of PeerAgentId, set peer-agent fail. Msg:%s", string(msg))
+		feedback = genCommonMsgFeedback("SET_PEER", "FAIL", s)
+		err = errors.New(s)
+		return
+	}
+
+	peerAgentID, ok := value.(string)
+	if false == ok {
+		s := fmt.Sprintf("VmId type assertion fail")
+		feedback = genCommonMsgFeedback("SET_PEER", "FAIL", s)
+		err = errors.New(s)
+		return
+	}
+
+	err = setPeerAgent(agentID, peerAgentID)
+	if nil != err {
+		s := fmt.Sprintf("Set PeerAgentId fail, Err:%s", err.Error())
+		feedback = genCommonMsgFeedback("SET_PEER", "FAIL", s)
+		err = errors.New(s)
+		return
+	}
+
+	s := fmt.Sprintf("Set %s's peerAgent to %s success", agentID, peerAgentID)
+	genCommonMsgFeedback("SET_PEER", "SUCCESS", s)
+
+	return 
 }
 
 func handleAddVdiskMsg(m map[string]interface{}, msg string) (feedback string, err error){
@@ -199,6 +264,9 @@ func msgHandler(jsonMsg []byte) (feedback string, err error){
 
 		case "REGISTER_AGENT":
 			feedback, err = handleRegisterAgentMsg(m, string(jsonMsg))	
+		
+		case "SET_PEER":
+			feedback, err = handleSetPeerMsg(m, string(jsonMsg))
 
 		case "ADD_VDISK":
 			feedback, err = handleAddVdiskMsg(m, string(jsonMsg))

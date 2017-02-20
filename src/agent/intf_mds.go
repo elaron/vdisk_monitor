@@ -30,8 +30,8 @@ func handleAddVdiskFbMsg(m map[string]string, fbMsg string) error{
 		return errors.New(s)
 	}
 
-	vdiskId := msgBody
-	startOriginator(vdiskId)
+	//vdiskId := msgBody
+	//startOriginator(vdiskId)
 	return nil
 }
 
@@ -53,7 +53,8 @@ func feedbackMsgHandler(fbMsg string) error {
 
 	switch feedBackType {
 		case "ADD_VDISK_FEEDBACK":
-			handleAddVdiskFbMsg(m,fbMsg)
+			//handleAddVdiskFbMsg(m,fbMsg)
+			fmt.Println(fbMsg)
 
 		case "REGISTER_AGENT_FEEDBACK":
 			fmt.Println(fbMsg)
@@ -127,6 +128,7 @@ func sendRegisteAgentMsg() {
 		Hostname: "aaa",
 		Ip:       g_agentConfig.HostIp,
 		Id:       g_agentConfig.AgentId,
+		PeerAgentId: g_agentConfig.PeerAgentId,
 		TcpServerPort: g_agentConfig.TcpServerPort,
 	}
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"net"
+	"net"	
 	"time"
 	"errors"
 	"flag"
@@ -11,6 +11,7 @@ import (
 
 type AgentConfig struct {
 	AgentId		string
+	PeerAgentId string
 	PortRange [2]uint32
 	CurrPort uint32
 	TcpServerPort uint32
@@ -23,6 +24,9 @@ func main() {
 
 	initAgentConfig()
 	sendRegisteAgentMsg()
+
+	go watchVdiskChange(g_agentConfig.AgentId, common.PRIMARY_BACKUP)
+	go watchVdiskChange(g_agentConfig.AgentId, common.SECONDARY_BACKUP)
 	
 	//go heartbeatToMds()
 	go sendAddVdiskMsgToMds()
@@ -39,10 +43,13 @@ func initAgentConfig() {
     port := flag.Int("port", 3333, "Tcp server port")
     ip := flag.String("ip", "127.0.0.1", "server ip")
     agentId := flag.String("id", "agent100", "agent Id")
+    peerAgentId := flag.String("peerId", "agent200", "peer-agent Id")
  
     flag.Parse()
 
 	g_agentConfig.AgentId = *agentId
+	g_agentConfig.PeerAgentId = *peerAgentId
+
 	g_agentConfig.TcpServerPort = uint32(*port)
 	g_agentConfig.HostIp = *ip
 
@@ -82,7 +89,7 @@ func getAvailablePort(num uint8) ([]uint32, error) {
 	return []uint32{}, errors.New("Get ports fail")	
 }
 
-func startOriginator(vdiskId string) {
+func startSync(vdiskId string, bkpType common.BACKUP_TYPE) {
 	
 	ports, err := getAvailablePort(4)
 	if nil != err {
@@ -91,7 +98,7 @@ func startOriginator(vdiskId string) {
 
 	fmt.Println(vdiskId, ports)
 
-	syncInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, common.PRIMARY_BACKUP)
+	syncInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, bkpType)
 	if nil != err {
 		return
 	}
@@ -99,5 +106,40 @@ func startOriginator(vdiskId string) {
 	syncInfo.Tcp_server_port = ports
 	syncInfo.LastHeartBeatTime = time.Now().String()
 
-	common.SetVdiskBackupDaemonInfo(vdiskId, syncInfo, common.PRIMARY_BACKUP)
+	common.SetVdiskBackupDaemonInfo(vdiskId, syncInfo, bkpType)
 }
+
+func removeSync(vdiskId string, bkpType common.BACKUP_TYPE) {
+	
+	syncInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, bkpType)
+	if nil != err {
+		return
+	}
+
+	syncInfo.State = common.REMOVED
+	syncInfo.Tcp_server_port = []uint32{}
+
+	common.SetVdiskBackupDaemonInfo(vdiskId, syncInfo, bkpType)
+}
+
+func watchVdiskChange(agentId string, bkpType common.BACKUP_TYPE) {
+	
+	for {
+		addVdisks, rmvVdisks, err := common.WatchVdiskList(agentId, bkpType)
+		if err != nil {
+			list := []string{"primary_vdisks", "secondary_vdisks"}
+			fmt.Printf("Stop watching %s vdisk list\n", list[bkpType])
+			break
+		}
+
+		for _,vdiskId := range addVdisks {
+			startSync(vdiskId, bkpType)
+		}
+
+		for _,vdiskId := range rmvVdisks {
+			removeSync(vdiskId, bkpType)
+		}
+	}
+}
+
+

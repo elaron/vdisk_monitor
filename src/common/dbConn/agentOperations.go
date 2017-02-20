@@ -2,126 +2,153 @@ package common
 
 import (
 	"fmt"
+	"sort"
 	"encoding/json"
-	"bytes"
 	"strings"
 	"errors"
 	"vdisk_monitor/src/common/etcdInterface"
 )
+
 //Agent structure
 //--agent
 //    |_agentID
 //         |_basicInfo
 //         |_primary_vdisks#
 //         |_secondary_vdisks
+const AGENT_ROOT_NODE string = "agents"
+const AGENT_BASICINFO_NODE string = "basicInfo"
+const AGENT_PRIMARY_VDISKS_NODE string = "primary_vdisks"
+const AGENT_SECONDARY_VDISKS_NODE string = "secondary_vdisks"
 
 //----Begin Agent CRUD----
-const (
-	AGENT_BASIC_INFO = iota
-	AGENT_PRIMARY_VDISKS
-	AGENT_SECONDARY_VDISKS
-	AGGENT_SUB_NODE_TYPE_BUTT
-)
-type AGENT_SUB_NODE_TYPE int32
-
-func getAgentRootKey(agentID string) string{
-
-	key := bytes.Buffer{}
-	key.WriteString("/agents/")
-	key.WriteString(agentID)
-	key.WriteString("/")
+func GetAgentBasicInfo(agentID string) (AgentBasicInfo, error) {
 	
-	return key.String()
-}
+	getValueFunc := etcdIntf.GetKey()
+	key := fmt.Sprintf("/%s/%s/%s", AGENT_ROOT_NODE, agentID, AGENT_BASICINFO_NODE)
 
-func getAgentSubNodeNames() []string {
-	return []string{"basicInfo", "primary_vdisks", "secondary_vdisks"}
-}
-
-func getAgentSubNodesPaths(agentID string) []string{
-	
-	agentRootKey := getAgentRootKey(agentID)
-	subNodeNames := getAgentSubNodeNames()
-
-	var path bytes.Buffer
-	var subNodePaths []string
-	
-	for _, name := range subNodeNames {
-		path.Reset()
-		path.WriteString(agentRootKey)
-		path.WriteString(name)
-
-		subNodePaths = append(subNodePaths, path.String())
+	value, err := getValueFunc(key)
+	if nil != err {
+		return AgentBasicInfo{}, err
 	}
 
-	return subNodePaths
-}
-
-func getAgentSubNodeValues(agent Agent) ([AGGENT_SUB_NODE_TYPE_BUTT]string, error){
-	
-	var b 				[]byte
-	var errs 			[AGGENT_SUB_NODE_TYPE_BUTT]error
-	var subNodeValues 	[AGGENT_SUB_NODE_TYPE_BUTT]string
-	
-	b, errs[AGENT_BASIC_INFO] = json.Marshal(agent.BasicInfo)
-	subNodeValues[AGENT_BASIC_INFO] = string(b)
-
-	b, errs[AGENT_PRIMARY_VDISKS] = json.Marshal(agent.Primary_vdisks)
-	subNodeValues[AGENT_PRIMARY_VDISKS] = string(b)
-
-	b, errs[AGENT_SECONDARY_VDISKS] = json.Marshal(agent.Secondary_vdisks)
-	subNodeValues[AGENT_SECONDARY_VDISKS] = string(b)
-
-	for _, e := range errs {
-		if e != nil {
-			fmt.Printf("Encode %s fail", e.Error())
-			return [AGGENT_SUB_NODE_TYPE_BUTT]string{}, e
-		}
+	var info AgentBasicInfo
+	err = json.Unmarshal([]byte(value), &info)
+	if nil != err {
+		return info, err
 	}
 
-	return subNodeValues, nil
+	return info, nil
 }
 
-func SetAgent(f func() (func(key string, value string) error), agent Agent) error{
+func SetAgentBasicInfo(info AgentBasicInfo) error {
 	
-	nodeValues, err := getAgentSubNodeValues(agent)
-	if err != nil {
-		fmt.Println("Update agent fail, err:", err.Error())
+	setValueFunc := etcdIntf.SetKey()
+	key := fmt.Sprintf("/%s/%s/%s", AGENT_ROOT_NODE, info.Id, AGENT_BASICINFO_NODE)
+
+	value, err := json.Marshal(info)
+	if nil != err {
 		return err
 	}
 
-	nodeNames 		:= getAgentSubNodeNames()	
-	subNodePaths 	:= getAgentSubNodesPaths(agent.BasicInfo.Id)	
-	addAgentFunc 	:= f()
+	err = setValueFunc(key, string(value))
+	return err
+}
 
-	for i, name := range nodeNames {
+func GetPrimaryVdisks(agentID string) ([]string, error){
 	
-		errMsg := addAgentFunc(subNodePaths[i], nodeValues[i])
-		if errMsg != nil {
-			fmt.Printf("Set agent's %s fail. Key:%s Value:%s", name, subNodePaths[i], nodeValues[i])
-			return errMsg
-		}
+	getValueFunc := etcdIntf.GetKey()
+	key := fmt.Sprintf("/%s/%s/%s", AGENT_ROOT_NODE, agentID, AGENT_PRIMARY_VDISKS_NODE)
+
+	value, err := getValueFunc(key)
+	if nil != err {
+		return []string{}, err
 	}
 
-	return nil
+	var vdiskIdList []string
+
+	err = json.Unmarshal([]byte(value), &vdiskIdList)
+
+	return vdiskIdList, err
+}
+
+func SetPrimaryVdisks(agentID string, vdiskIdList []string) error {
+	
+	setValueFunc := etcdIntf.SetKey()
+	key := fmt.Sprintf("/%s/%s/%s", AGENT_ROOT_NODE, agentID, AGENT_PRIMARY_VDISKS_NODE)
+
+	value, err := json.Marshal(vdiskIdList)
+	if nil != err {
+		return err
+	}
+
+	err = setValueFunc(key, string(value))
+	return err
+}
+
+func GetSecondaryVdisks(agentID string) ([]string, error){
+	
+	getValueFunc := etcdIntf.GetKey()
+	key := fmt.Sprintf("/%s/%s/%s", AGENT_ROOT_NODE, agentID, AGENT_SECONDARY_VDISKS_NODE)
+
+	value, err := getValueFunc(key)
+	if nil != err {
+		return []string{}, err
+	}
+
+	var vdiskIdList []string
+
+	err = json.Unmarshal([]byte(value), &vdiskIdList)
+
+	return vdiskIdList, err
+}
+
+func SetSecondaryVdisks(agentID string, vdiskIdList []string) error {
+	
+	setValueFunc := etcdIntf.SetKey()
+	key := fmt.Sprintf("/%s/%s/%s", AGENT_ROOT_NODE, agentID, AGENT_SECONDARY_VDISKS_NODE)
+
+	value, err := json.Marshal(vdiskIdList)
+	if nil != err {
+		return err
+	}
+
+	err = setValueFunc(key, string(value))
+	return err
+}
+
+func SetAgent(agent Agent) error{
+	
+	err := SetAgentBasicInfo(agent.BasicInfo)
+	if nil != err {
+		return err
+	}
+
+	err = SetPrimaryVdisks(agent.BasicInfo.Id, agent.Primary_vdisks)
+	if nil != err {
+		return err
+	}
+
+	err = SetSecondaryVdisks(agent.BasicInfo.Id, agent.Secondary_vdisks)
+	return err
 }
 
 func CreateAgent(agent Agent) error {
 	
-	return SetAgent(etcdIntf.CreateKey, agent)
+	return SetAgent(agent)
 }
 
 func UpdateAgent(agent Agent) error{
 
-	return SetAgent(etcdIntf.UpdateKey, agent)
+	return SetAgent(agent)
 }
 
 func DeleteAgent(agentID string) error {
 
-	agentRootKey 	:= getAgentRootKey(agentID)	
+	key := fmt.Sprintf("/%s/%s", AGENT_ROOT_NODE, agentID)
+
 	deleteAgentFunc := etcdIntf.DeleteDirectory()
 
-	err := deleteAgentFunc(agentRootKey)
+	err := deleteAgentFunc(key)
 	if err != nil {
 	 	s := fmt.Sprintf("Delete agent fail! err :%s", err.Error())
 	 	return errors.New(s)
@@ -130,43 +157,19 @@ func DeleteAgent(agentID string) error {
 	 return nil
 }
 
-func GetAgent(agentID string) (Agent, error) {
+func GetAgent(agentID string) (agent Agent, err error) {
 	
-	getAgentNodeValueFunc := etcdIntf.GetKey()
-	subNodePaths := getAgentSubNodesPaths(agentID)
-
-	var value [AGGENT_SUB_NODE_TYPE_BUTT]string
-
-	for i, path := range subNodePaths {
-		value[i], _ = getAgentNodeValueFunc(path)
-		//fmt.Printf("Value[%d]:%s\n", i, value[i])	//just for debug
+	agent.BasicInfo, err = GetAgentBasicInfo(agentID)
+	if nil != err {
+		return agent, err
 	}
 
-	var agent Agent
-	var errs [AGGENT_SUB_NODE_TYPE_BUTT]error 
-
-	if 0 != len(value[AGENT_BASIC_INFO]) {
-		errs[AGENT_BASIC_INFO] = json.Unmarshal([]byte(value[AGENT_BASIC_INFO]), &agent.BasicInfo)
-	
-	}else{
-		return Agent{}, errors.New("Key is non-exist")
+	agent.Primary_vdisks, err = GetPrimaryVdisks(agentID)
+	if nil != err {
+		return agent, err
 	}
 
-	if 0 != len(value[AGENT_PRIMARY_VDISKS]) {
-		errs[AGENT_PRIMARY_VDISKS] = json.Unmarshal([]byte(value[AGENT_PRIMARY_VDISKS]), &agent.Primary_vdisks)	
-	}
-
-	if 0 != len(value[AGENT_SECONDARY_VDISKS]) {
-		errs[AGENT_SECONDARY_VDISKS] = json.Unmarshal([]byte(value[AGENT_SECONDARY_VDISKS]), &agent.Secondary_vdisks)
-	}
-
-	for i, e := range errs {
-		if e != nil {
-			fmt.Printf("Unmarshal %s's value fail! Err: %s. \n", subNodePaths[i], e.Error())
-			return Agent{}, e
-		}
-	}
-
+	agent.Secondary_vdisks, err = GetSecondaryVdisks(agentID)
 	return agent, nil
 }
 
@@ -202,11 +205,75 @@ func DeleteAllAgents() error{
 
 	deleteAgentFunc := etcdIntf.DeleteDirectory()
 
-	err := deleteAgentFunc("/agents")
+	key := fmt.Sprintf("/%s", AGENT_ROOT_NODE)
+
+	err := deleteAgentFunc(key)
 	if err != nil {
 	 	s := fmt.Sprintf("Delete all agents fail, err: %s\n", err.Error())
 	 	return errors.New(s)
 	 }
 
 	 return nil
+}
+
+
+func containsVdisk(vdiskId string, vdiskIdList []string) bool{
+	
+	for _, id := range vdiskIdList {
+	
+		if vdiskId == id {
+			return true		
+		}
+	}
+
+	return false
+}
+
+func WatchVdiskList(agentID string, bkpType BACKUP_TYPE) (addVdisks []string, rmvVdisks []string, err error){
+	
+	var key string
+
+	if bkpType == PRIMARY_BACKUP {
+		key = fmt.Sprintf("/agents/%s/primary_vdisks")	
+	
+	}else {
+		key = fmt.Sprintf("/agents/%s/secondary_vdisks")			
+	}
+
+	watchFunc := etcdIntf.WatchKey()
+
+	currValue, prevValue, err := watchFunc(key)
+	if nil != err {
+		fmt.Printf("Stop watching %s, Err:%s", agentID, err.Error())
+		return
+	}
+
+	var currVdiskList, prevVdiskList []string
+	json.Unmarshal([]byte(currValue), &currVdiskList)
+	json.Unmarshal([]byte(prevValue), &prevVdiskList)
+
+	sort.Strings(currVdiskList)
+	sort.Strings(prevVdiskList)
+
+	var found bool
+
+	//check new vdiskId
+	for _, vdiskId := range currVdiskList {
+
+		found = containsVdisk(vdiskId, prevVdiskList)
+		if false == found {
+			addVdisks = append(addVdisks, vdiskId)
+		}
+	}
+
+	//check removed vdiskId
+	for _, vdiskId := range prevVdiskList {
+
+		found = containsVdisk(vdiskId, currVdiskList)
+		if false == found {
+			rmvVdisks = append(rmvVdisks, vdiskId)
+		}
+	}
+
+	return
 }

@@ -59,6 +59,19 @@ func addAgent(agentId string, ip string, hostname string) error{
 	return nil
 }
 
+func setPeerAgent(agentID string, peerAgentId string) error {
+	
+	info, err := common.GetAgentBasicInfo(agentID)
+	if nil != err {
+		return err
+	}
+
+	info.PeerAgentId = peerAgentId
+
+	err = common.SetAgentBasicInfo(info)
+	return err
+}
+
 func removeAgent(agentID string) error{
 	
 	//funcName, file, line, _ := runtime.Caller(0)
@@ -96,9 +109,18 @@ func isVdiskExistOnAgent(vdiskPath string, agent common.Agent) bool{
 
 func addVdisk(agentID string, vmId string, path string) (string, error){
 	
+	//check agent/peerAgent existence and vdisk's duplication
 	agent, err := common.GetAgent(agentID)
 	if nil != err {
-		s := fmt.Sprintf("Agent(%s) is not exist!")
+		s := fmt.Sprintf("Agent(%s) is not exist!", agentID)
+		return "", errors.New(s)
+	}
+
+	peerAgent, err := common.GetAgent(agent.BasicInfo.PeerAgentId)
+	if nil != err {
+		s := fmt.Sprintf("Peer Agent(%s) is not exist, add vdisk on Agent(%s) fail!", 
+			agent.BasicInfo.PeerAgentId, 
+			agentID)
 		return "", errors.New(s)
 	}
 
@@ -108,6 +130,7 @@ func addVdisk(agentID string, vmId string, path string) (string, error){
 		return vdiskId, errors.New(s)
 	}
 
+	//create new vdisk info node
 	var vdisk common.Vdisk
 
 	vdisk.Id = genUUID()
@@ -124,11 +147,20 @@ func addVdisk(agentID string, vmId string, path string) (string, error){
 		s := fmt.Sprintf("Create vdisk fail! Add vdisk(%s) on agent(%s) fail!", path, agentID)
 		return vdisk.Id, errors.New(s)
 	}
+
+	//append new vdiskId into agent's primary vdiskList and peerAgent's secondary vdiskList
 	agent.Primary_vdisks = append(agent.Primary_vdisks, vdisk.Id)
+	peerAgent.Secondary_vdisks = append(peerAgent.Secondary_vdisks, vdisk.Id)
 
 	err = common.UpdateAgent(agent)
 	if nil != err {
 		s := fmt.Sprintf("Update agent(%s) fail, add vdisk(%s) fail!", agentID, path)
+		return vdisk.Id, errors.New(s)
+	}
+
+	err = common.UpdateAgent(peerAgent)
+	if nil != err {
+		s := fmt.Sprintf("Update peerAgent(%s) fail, add vdisk(%s) fail!", agentID, path)
 		return vdisk.Id, errors.New(s)
 	}
 	

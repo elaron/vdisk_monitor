@@ -173,6 +173,10 @@ func case5_addVdisk() error{
 		return err
 	}
 
+	peerAgentId := "102"
+	setPeerAgent(agentID, peerAgentId)
+	addAgent(peerAgentId, "10.25.26.47", "agent102")
+
 	_, err = addVdisk("101", "vm_case5", "root/case5/os_vdisk.qcow2")
 	if nil != err {
 		return err
@@ -227,6 +231,11 @@ func case6_Watcher() error{
 	if nil != err {
 		return err
 	}
+
+	peerAgentId := "102"
+	setPeerAgent(agentID, peerAgentId)
+	addAgent(peerAgentId, "10.25.26.47", "agent102")
+
 
 	watchFunc := etcdIntf.WatchKey()
 

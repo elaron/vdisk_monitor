@@ -4,6 +4,7 @@ package common
 const (
 	ACTIVE = iota
 	LOSS_CONN
+	REMOVED
 	DAEMON_STATE_TYPE_BUTT
 )
 type DAEMON_STATE_TYPE int32
@@ -32,11 +33,19 @@ const (
 )
 type BACKUP_STATE int32
 
+const (
+	PRIMARY_BACKUP = iota
+	SECONDARY_BACKUP
+	BACKUP_TYPE_BUTT
+)
+type BACKUP_TYPE int32
+
 //define basic structure
 type AgentBasicInfo struct {
 	HostIp 		string
 	Hostname 	string
 	Id 			string
+	PeerAgentId	string
 	State 		DAEMON_STATE_TYPE
 	TcpServerPort uint32
 }
@@ -68,12 +77,6 @@ type VdiskBackup struct {
 	SyncDaemonInfo	SyncDaemon
 }
 
-const (
-	PRIMARY_BACKUP = iota
-	SECONDARY_BACKUP
-	BACKUP_TYPE_BUTT
-)
-type BACKUP_TYPE int32
 
 type VmInfomation struct {
 	VmId 				string
