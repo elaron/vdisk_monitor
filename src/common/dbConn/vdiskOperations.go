@@ -11,14 +11,15 @@ import (
 //Vdisk structure
 //--vdisks
 //    |_vdiskID
-//         |_vmInfo
-//         |_backups
-//         		|_primary_bkp
-//         				|_backupInfo
-//         				|_daemonInfo
-//         		|_secondary_bkp
-//         				|_backupInfo
-//         				|_daemonInfo
+//    |    |_vmInfo
+//    |    |_backups
+//    |    		|_primary_bkp
+//    |    				|_backupInfo
+//    |    				|_daemonInfo
+//    |    		|_secondary_bkp
+//    |    				|_backupInfo
+//    |    				|_daemonInfo
+//    |_waitToRemove
 
 const VDISK_ROOT_NODE string = "vdisks"
 const VDISK_VM_INFO_NODE string = "vmInfo"
@@ -27,6 +28,8 @@ const VDISK_PRIMARY_BKP_NODE string = "primary_bkp"
 const VDISK_SECONDARY_BKP_NODE string = "secondary_bkp"
 const VDISK_BACKUP_INFO_NODE string = "backupInfo"
 const VDISK_DAEMON_INFO_NODE string = "daemonInfo"
+
+const VDISK_WAIT_TO_REMOVE string = "waitToRemove"
 
 func formatInt32(n int32) string {
     return strconv.FormatInt(int64(n), 10)
@@ -220,6 +223,8 @@ func DeleteVdisk(vdiskId string) error{
 		return errors.New(s)
 	}
 
+	fmt.Printf("Delete vdisk(%s) success!\n", vdiskId)
+
 	return nil
 }
 
@@ -236,3 +241,76 @@ func DeleteAllVdisks() error{
 	 return nil
 }
 
+func GetWaitToRemoveVdiskList() ([]string, error){
+
+	key := fmt.Sprintf("/%s/%s", VDISK_ROOT_NODE, VDISK_WAIT_TO_REMOVE)	
+	
+	getListFunc := etcdIntf.GetKey()
+
+	value, err := getListFunc(key)
+	if nil != err {
+		return []string{}, err
+	}
+
+	var list []string
+	err = json.Unmarshal([]byte(value), &list)
+
+	return list,err
+}
+
+func AddVdiskToRemoveList(vdiskId string) error {
+	
+	list, _ := GetWaitToRemoveVdiskList()
+	list = append(list, vdiskId)
+
+	
+	key := fmt.Sprintf("/%s/%s", VDISK_ROOT_NODE, VDISK_WAIT_TO_REMOVE)	
+	value, err := json.Marshal(list)
+	if nil != err {
+		return err
+	}
+
+	setListFunc := etcdIntf.SetKey()
+	err = setListFunc(key, string(value))
+	
+	return err
+}
+
+func RemoveVdiskIdInList(vdiskId string, vdiskIdList []string) []string{
+
+	if len(vdiskIdList) == 0 {
+		return []string{}
+	}
+
+	var rmvIdx int	
+	for index, id := range vdiskIdList {
+		if vdiskId == id {
+			rmvIdx = index
+			break
+		}
+	}
+
+	newList := append(vdiskIdList[:rmvIdx], vdiskIdList[rmvIdx+1:]...)
+	return newList
+}
+
+func EraseVdiskFromRemoveList(vdiskId string) error {
+	
+	list, err := GetWaitToRemoveVdiskList()
+	if nil != err {
+		return err
+	}
+
+	list = RemoveVdiskIdInList(vdiskId, list)
+	
+	key := fmt.Sprintf("/%s/%s", VDISK_ROOT_NODE, VDISK_WAIT_TO_REMOVE)	
+	value, err := json.Marshal(list)
+	if nil != err {
+		return err
+	}
+
+	setListFunc := etcdIntf.SetKey()
+	err = setListFunc(key, string(value))
+	
+	return err
+}

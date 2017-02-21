@@ -197,19 +197,6 @@ func getVdiskId(agentID string, path string) (string, error){
 	return "", errors.New(s)
 }
 
-func removeVdiskIdInList(vdiskId string, vdiskIdList []string) []string{
-	var rmvIdx int	
-	for index, id := range vdiskIdList {
-		if vdiskId == id {
-			rmvIdx = index
-			break
-		}
-	}
-
-	newList := append(vdiskIdList[:rmvIdx], vdiskIdList[rmvIdx+1:]...)
-	return newList
-}
-
 func removeVdisk(vdiskId string) error {
 
 	//remove vdiskID from PrimaryAgent's vdiskList
@@ -222,7 +209,7 @@ func removeVdisk(vdiskId string) error {
 	if nil != err {
 		return err
 	}
-	primaryVdisks = removeVdiskIdInList(vdiskId, primaryVdisks)
+	primaryVdisks = common.RemoveVdiskIdInList(vdiskId, primaryVdisks)
 
 	err = common.SetPrimaryVdisks(primaryBkp.ResidentAgentID, primaryVdisks)
 	if nil != err {
@@ -239,12 +226,18 @@ func removeVdisk(vdiskId string) error {
 	if nil != err {
 		return err
 	}
-	secondaryVdisks = removeVdiskIdInList(vdiskId, secondaryVdisks)
+	secondaryVdisks = common.RemoveVdiskIdInList(vdiskId, secondaryVdisks)
 
-	err = common.SetPrimaryVdisks(secondaryBkp.ResidentAgentID, secondaryVdisks)
+	err = common.SetSecondaryVdisks(secondaryBkp.ResidentAgentID, secondaryVdisks)
 	if nil != err {
 		return err
-	}	
+	}
+
+	err = common.AddVdiskToRemoveList(vdiskId)
+	if nil != err {
+		s := fmt.Sprintf("Add vdiskId to WaitToRemoveVdiskList fail, Err:%s ", err.Error())
+		return errors.New(s)
+	}
 
 	return nil
 }
@@ -266,4 +259,31 @@ func removeVdisk2(vdiskID string, agentID string, path string) error{
 
 	err = common.DeleteVdisk(rmvVdiskID)
 	return err
+}
+
+func checkWaitToRemoveVdisk() {
+	
+	list, err := common.GetWaitToRemoveVdiskList()
+
+	if nil != err {
+		return
+	}
+
+	for _, vdiskId := range list {
+		
+		origInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, common.PRIMARY_BACKUP)
+		if nil != err {
+			continue
+		}
+
+		termInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, common.SECONDARY_BACKUP)
+		if nil != err {
+			continue
+		}
+
+		if origInfo.State == common.REMOVED && termInfo.State == common.REMOVED {
+			common.DeleteVdisk(vdiskId)
+			common.EraseVdiskFromRemoveList(vdiskId)
+		}
+	}
 }

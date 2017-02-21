@@ -265,7 +265,7 @@ func WatchVdiskList(agentID string, bkpType BACKUP_TYPE) (addVdisks []string, rm
 			addVdisks = append(addVdisks, vdiskId)
 		}
 	}
-	fmt.Printf("Add vdisk:%d, list:%s", len(addVdisks), addVdisks)
+	//fmt.Printf("Add vdisk:%d, list:%s", len(addVdisks), addVdisks)
 
 	//check removed vdiskId
 	for _, vdiskId := range prevVdiskList {
@@ -275,7 +275,7 @@ func WatchVdiskList(agentID string, bkpType BACKUP_TYPE) (addVdisks []string, rm
 			rmvVdisks = append(rmvVdisks, vdiskId)
 		}
 	}
-	fmt.Printf("Remove vdisk:%d, list:%s\n", len(rmvVdisks), rmvVdisks)
+	//fmt.Printf("Remove vdisk:%d, list:%s\n", len(rmvVdisks), rmvVdisks)
 
 	return
 }

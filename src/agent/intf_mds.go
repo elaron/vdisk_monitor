@@ -65,7 +65,7 @@ func feedbackMsgHandler(fbMsg string) error {
 	switch feedBackType {
 		case "ADD_VDISK_FEEDBACK":
 			handleAddVdiskFbMsg(m,fbMsg)
-			fmt.Println(fbMsg)
+			//fmt.Println(fbMsg)
 
 		case "REGISTER_AGENT_FEEDBACK":
 			
@@ -77,7 +77,7 @@ func feedbackMsgHandler(fbMsg string) error {
 			}
 			
 		default:
-			fmt.Println(fbMsg)
+			//fmt.Println(fbMsg)
 	}
 
 	return nil
@@ -105,17 +105,32 @@ func listenFeedback(conn net.Conn) {
 func connectMds() (net.Conn){
 
 	server := "127.0.0.1:8877"
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
-	}
+	var conn *net.TCPConn
+	var tcpAddr *net.TCPAddr
+	var err error
 
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
+	for {
+		tcpAddr, err = net.ResolveTCPAddr("tcp4", server)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
+			time.Sleep(2 * time.Second)
+		}else {
+			break
+		}
+
 	}
+	
+
+	for {
+		conn, err = net.DialTCP("tcp", nil, tcpAddr)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
+			time.Sleep(2 * time.Second)
+		}else {
+			break
+		}
+	}
+	
 
 	fmt.Println("connect success")
 
@@ -133,7 +148,10 @@ func sendMsgToMds() func(string) error{
 		_,err := conn.Write([]byte(msg))
 
 		if  err != nil {
-			fmt.Println(err.Error())
+			fmt.Println("SendMsgFail:", err.Error())
+			conn.Close()
+			conn = connectMds()
+			conn.Write([]byte(msg))
 		}
 		return err
 	}
@@ -160,15 +178,16 @@ func sendRegisteAgentMsg() {
 }
 
 func getAgentIdentifyInfo() string {
-	registerAgent := messageIntf.RegisterAgentMsg{
+	message := messageIntf.RegisterAgentMsg{
 		MsgType: "AGENT_HEART_BEAT",
 		Hostname: "aaa",
-		Ip:       "192.168.56.104",
+		Ip:       g_agentConfig.HostIp,
 		Id:       g_agentConfig.AgentId,
+		PeerAgentId: g_agentConfig.PeerAgentId,
 		TcpServerPort: g_agentConfig.TcpServerPort,
 	}
 
-	msg, err := json.Marshal(registerAgent)
+	msg, err := json.Marshal(message)
 	if nil != err {
 		fmt.Println("encode to json fail!")
 	} else {
@@ -186,12 +205,11 @@ func heartbeatToMds() {
 	for {
 		//runtime.Gosched()
 		sendHbMsg(info)
-		fmt.Println(info)
 		time.Sleep(3 * time.Second)
 	}
 }
 
-func sendAddVdiskMsgToMds() {
+func mock_sendAddVdiskMsgToMds() {
 
 	sendFunc := sendMsgToMds()
 	
@@ -218,11 +236,10 @@ func sendAddVdiskMsgToMds() {
 		err = sendFunc(string(b))
 		if err != nil {
 			fmt.Println("Send addvdisk fail")
-			break
 		}
-		fmt.Println(string(b))
+		//fmt.Println(string(b))
 		
-		time.Sleep(30 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
 }
 
@@ -249,7 +266,7 @@ func sendRemoveVdiskMsgToMds() {
 					fmt.Printf("Send remvoe vdisk msg fail\n")
 					continue
 				}
-				fmt.Println(string(b))
+				//fmt.Println(string(b))
 		}
 	}
 }

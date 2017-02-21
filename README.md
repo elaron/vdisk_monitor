@@ -26,6 +26,8 @@ Notes & References:
 
 [timer](https://gobyexample.com/timers)
 
+[tickers](https://gobyexample.com/tickers)
+
 [go socket](http://blog.csdn.net/ahlxt123/article/details/47320161)
 
 [etcdctl README](https://github.com/coreos/etcd/blob/master/etcdctl/READMEv2.md)

@@ -223,10 +223,17 @@ func WatchKey()(func (key string) (currentValue string, prevValue string ,err er
 
 	return func (key string) (currentValue string, prevValue string ,err error) {
 		
+		resp, err := keyApi.Get(context.Background(), key, nil)
+		if nil != err {
+			s := fmt.Sprintf("Get key(%s) fail, cannot watch non-exist key!", key)
+			err = errors.New(s)
+			return
+		}
+
 		//Watcher(key string, opts *WatcherOptions) Watcher
 		watcher := keyApi.Watcher(key, nil)
 
-		resp, err := watcher.Next(context.Background())
+		resp, err = watcher.Next(context.Background())
 		if err != nil {
 			return 
 		}

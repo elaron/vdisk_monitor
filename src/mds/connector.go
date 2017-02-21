@@ -78,7 +78,7 @@ func handleRegisterAgentMsg(m map[string]interface{}, msg string) (feedback stri
 
 	err = addAgent(agentID, hostIP, hostName)
 	if nil != err {
-		s := fmt.Sprintf("Register agent fail!")
+		s := fmt.Sprintf("Register agent fail! Err:%s", err.Error())
 		feedback = genCommonMsgFeedback("REGISTER_AGENT", "FAIL", s)
 		err = errors.New(s)
 		return
@@ -305,7 +305,8 @@ func msgHandler(jsonMsg []byte) (feedback string, err error){
 			feedback, err = handleRmvVdiskMsg(m, string(jsonMsg))
 
 		case "AGENT_HEART_BEAT":
-			fmt.Println(string(jsonMsg))
+			//fmt.Println(string(jsonMsg))
+			handleRegisterAgentMsg(m, string(jsonMsg))	
 
 		default:
 			s := fmt.Sprintf("Unrecognize msgType:%s", msgType)
@@ -379,7 +380,7 @@ func connectAgent(agentID string) (net.Conn){
 	return conn
 }
 
-func sendMsgToMds(agentID string) func(string) error{
+func sendMsgToAgent(agentID string) func(string) error{
 	
 	conn := connectAgent(agentID)
 
