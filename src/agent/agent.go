@@ -6,6 +6,7 @@ import (
 	"time"
 	"errors"
 	"flag"
+	"sync"
 	"vdisk_monitor/src/common/dbConn"
 )
 
@@ -16,6 +17,7 @@ type AgentConfig struct {
 	CurrPort uint32
 	TcpServerPort uint32
 	HostIp	string
+	genAvailPortMutex sync.Mutex
 }
 
 var g_agentConfig AgentConfig
@@ -52,6 +54,8 @@ func initAgentConfig() {
 	g_agentConfig.PortRange[1] = 40000
 
 	g_agentConfig.CurrPort = g_agentConfig.PortRange[0]
+
+	g_agentConfig.genAvailPortMutex = sync.Mutex{}
 }
 
 func runAgent() {
@@ -65,9 +69,11 @@ func runAgent() {
 func getAvailablePort(num uint8) ([]uint32, error) {
 
 	portRange := g_agentConfig.PortRange[1] - g_agentConfig.PortRange[0]
+	
 		
 	var i uint32
 	var ports []uint32
+
 	for i = 0; i < portRange; i++ {
 			
 		tryPort := g_agentConfig.PortRange[0] + ((g_agentConfig.CurrPort + i)%portRange)
@@ -99,7 +105,7 @@ func startSync(vdiskId string, bkpType common.BACKUP_TYPE) {
 		fmt.Println(err.Error())
 	}
 
-	fmt.Println(vdiskId, ports)
+	fmt.Println(bkpType, vdiskId, ports)
 
 	syncInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, bkpType)
 	if nil != err {

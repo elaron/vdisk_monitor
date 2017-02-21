@@ -46,8 +46,14 @@ func addAgent(agentId string, ip string, hostname string) error{
 
 	agentExist, msg := isAgentExist(agentList, agent)
 	if true == agentExist {
-		s := fmt.Sprintf("Add agent fail, because of %s", msg)
-		return errors.New(s)
+
+		info, err := common.GetAgentBasicInfo(agentId)
+		if nil == err {
+			if (info.HostIp != ip) || (info.Id != agentId) {
+				s := fmt.Sprintf("Add agent fail, because of %s", msg)
+				return errors.New(s)				
+			}
+		}
 	}
 
 	err := common.CreateAgent(agent)

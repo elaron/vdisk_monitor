@@ -237,7 +237,7 @@ func WatchVdiskList(agentID string, bkpType BACKUP_TYPE) (addVdisks []string, rm
 		key = fmt.Sprintf("/%s/%s/%s", AGENT_ROOT_NODE, agentID, AGENT_PRIMARY_VDISKS_NODE)	
 	
 	}else {
-		key = fmt.Sprintf("/%s/%s/%s", AGENT_ROOT_NODE, agentID, AGENT_PRIMARY_VDISKS_NODE)			
+		key = fmt.Sprintf("/%s/%s/%s", AGENT_ROOT_NODE, agentID, AGENT_SECONDARY_VDISKS_NODE)			
 	}
 
 	watchFunc := etcdIntf.WatchKey()
@@ -275,7 +275,7 @@ func WatchVdiskList(agentID string, bkpType BACKUP_TYPE) (addVdisks []string, rm
 			rmvVdisks = append(rmvVdisks, vdiskId)
 		}
 	}
-	fmt.Printf("Remove vdisk:%d, list:%s", len(rmvVdisks), rmvVdisks)
+	fmt.Printf("Remove vdisk:%d, list:%s\n", len(rmvVdisks), rmvVdisks)
 
 	return
 }
