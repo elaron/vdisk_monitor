@@ -61,8 +61,8 @@ func initAgentConfig() {
 }
 
 func initAgentBuffer() {
-	g_buff.rmvVdisks = make(chan string)
-	g_buff.addVdisks = make(chan string)
+	g_buff.rmvVdisks = make(chan string, 10)
+	g_buff.addVdisks = make(chan string, 10)
 }
 
 func runAgent() {
