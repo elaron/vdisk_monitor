@@ -207,7 +207,7 @@ func case5_addVdisk() error{
 	for i := 0; i < loopCnt; i++ {
 		path := fmt.Sprintf("root/case5/vdisk%d.qcow2", i)
 
-		err := removeVdisk("", "101", path)
+		err := removeVdisk2("", "101", path)
 		if nil != err {
 			return err
 		}

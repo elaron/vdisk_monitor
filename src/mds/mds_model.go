@@ -48,11 +48,11 @@ func addAgent(agentId string, ip string, hostname string) error{
 	if true == agentExist {
 
 		info, err := common.GetAgentBasicInfo(agentId)
-		if nil == err {
-			if (info.HostIp != ip) || (info.Id != agentId) {
-				s := fmt.Sprintf("Add agent fail, because of %s", msg)
-				return errors.New(s)				
-			}
+		
+		ok := (nil == err) && (info.HostIp == ip) && (info.Id == agentId)
+		if false == ok {
+			s := fmt.Sprintf("Add agent fail, because of %s", msg)
+			return errors.New(s)				
 		}
 	}
 
@@ -145,8 +145,11 @@ func addVdisk(agentID string, vmId string, path string) (string, error){
 
 	vdisk.Backups[common.PRIMARY_BACKUP].BackupInfo.ResidentAgentID = agentID
 	vdisk.Backups[common.PRIMARY_BACKUP].BackupInfo.Path = path
-
 	vdisk.Backups[common.PRIMARY_BACKUP].SyncDaemonInfo.SyncType = common.ORIGINATOR
+
+	vdisk.Backups[common.SECONDARY_BACKUP].BackupInfo.ResidentAgentID = agent.BasicInfo.PeerAgentId
+	vdisk.Backups[common.SECONDARY_BACKUP].BackupInfo.Path = path
+	vdisk.Backups[common.SECONDARY_BACKUP].SyncDaemonInfo.SyncType = common.TERMINATOR
 
 	err = common.CreateVdisk(vdisk)
 	if nil != err {
@@ -194,7 +197,59 @@ func getVdiskId(agentID string, path string) (string, error){
 	return "", errors.New(s)
 }
 
-func removeVdisk(vdiskID string, agentID string, path string) error{
+func removeVdiskIdInList(vdiskId string, vdiskIdList []string) []string{
+	var rmvIdx int	
+	for index, id := range vdiskIdList {
+		if vdiskId == id {
+			rmvIdx = index
+			break
+		}
+	}
+
+	newList := append(vdiskIdList[:rmvIdx], vdiskIdList[rmvIdx+1:]...)
+	return newList
+}
+
+func removeVdisk(vdiskId string) error {
+
+	//remove vdiskID from PrimaryAgent's vdiskList
+	primaryBkp, err := common.GetVdiskBackupInfo(vdiskId, common.PRIMARY_BACKUP)
+	if err != nil {
+		return err
+	}
+
+	primaryVdisks, err := common.GetPrimaryVdisks(primaryBkp.ResidentAgentID)
+	if nil != err {
+		return err
+	}
+	primaryVdisks = removeVdiskIdInList(vdiskId, primaryVdisks)
+
+	err = common.SetPrimaryVdisks(primaryBkp.ResidentAgentID, primaryVdisks)
+	if nil != err {
+		return err
+	}
+
+	//remove vdiskID from PrimaryAgent's vdiskList
+	secondaryBkp, err := common.GetVdiskBackupInfo(vdiskId, common.SECONDARY_BACKUP)
+	if err != nil {
+		return err
+	}
+
+	secondaryVdisks, err := common.GetSecondaryVdisks(secondaryBkp.ResidentAgentID)
+	if nil != err {
+		return err
+	}
+	secondaryVdisks = removeVdiskIdInList(vdiskId, secondaryVdisks)
+
+	err = common.SetPrimaryVdisks(secondaryBkp.ResidentAgentID, secondaryVdisks)
+	if nil != err {
+		return err
+	}	
+
+	return nil
+}
+
+func removeVdisk2(vdiskID string, agentID string, path string) error{
 
 	var rmvVdiskID string
 	var err error

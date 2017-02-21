@@ -11,6 +11,10 @@ import (
 	"vdisk_monitor/src/common/messageIntf"
 )
 
+func mock_removeVdisk(vdiskId string) {
+	g_buff.rmvVdisks <- vdiskId
+}
+
 func handleAddVdiskFbMsg(m map[string]string, fbMsg string) error{
 		
 	opResult, ok := m["OpResult"]
@@ -30,8 +34,10 @@ func handleAddVdiskFbMsg(m map[string]string, fbMsg string) error{
 		return errors.New(s)
 	}
 
-	//vdiskId := msgBody
-	//startOriginator(vdiskId)
+	vdiskId := msgBody
+
+	mock_removeVdisk(vdiskId)
+	
 	return nil
 }
 
@@ -58,7 +64,7 @@ func feedbackMsgHandler(fbMsg string) error {
 
 	switch feedBackType {
 		case "ADD_VDISK_FEEDBACK":
-			//handleAddVdiskFbMsg(m,fbMsg)
+			handleAddVdiskFbMsg(m,fbMsg)
 			fmt.Println(fbMsg)
 
 		case "REGISTER_AGENT_FEEDBACK":
@@ -185,8 +191,6 @@ func heartbeatToMds() {
 	}
 }
 
-
-
 func sendAddVdiskMsgToMds() {
 
 	sendFunc := sendMsgToMds()
@@ -219,5 +223,33 @@ func sendAddVdiskMsgToMds() {
 		fmt.Println(string(b))
 		
 		time.Sleep(30 * time.Second)
+	}
+}
+
+func sendRemoveVdiskMsgToMds() {
+	
+	sendFunc := sendMsgToMds()
+
+	for {
+		select {
+			case vdiskId := <-g_buff.rmvVdisks:
+				msg := messageIntf.RemoveVdiskMsg{
+					MsgType: "REMOVE_VDISK",
+					VdiskId: vdiskId,
+				}
+
+				b, err := json.Marshal(msg)
+				if err != nil {
+					fmt.Printf("Generate remove vdisk msg fail, err: %s\n", err.Error())
+					continue
+				}
+
+				err = sendFunc(string(b))
+				if nil != err {
+					fmt.Printf("Send remvoe vdisk msg fail\n")
+					continue
+				}
+				fmt.Println(string(b))
+		}
 	}
 }

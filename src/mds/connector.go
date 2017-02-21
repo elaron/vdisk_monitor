@@ -218,6 +218,36 @@ func handleAddVdiskMsg(m map[string]interface{}, msg string) (feedback string, e
 	return
 }
 
+func handleRmvVdiskMsg(m map[string]interface{}, msg string) (feedback string, err error){
+	
+	value,ok := m["VdiskId"]
+	if false == ok {
+		s := fmt.Sprintf("Lack of VdiskId, remove vdisk fail. Msg: ", string(msg))
+		feedback = genCommonMsgFeedback("REMOVE_VDISK", "FAIL", s)
+		err = errors.New(s)
+		return
+	}
+	vdiskId, ok := value.(string)
+	if false == ok {
+		s := fmt.Sprintf("VdiskId type assertion fail")
+		feedback = genCommonMsgFeedback("REMOVE_VDISK", "FAIL", s)
+		err = errors.New(s)
+		return
+	}
+
+	err = removeVdisk(vdiskId)
+	if nil != err {
+		feedback = genCommonMsgFeedback("REMOVE_VDISK", "FAIL", err.Error())
+		fmt.Println("Remove vdisk fail")
+		return
+	}
+
+	fmt.Println("Remove vdisk success")
+	feedback = genCommonMsgFeedback("REMOVE_VDISK", "SUCCESS", vdiskId)
+	err = nil
+	return
+}
+
 func genCommonMsgFeedback(msgType string, opResult string, msgBody string) string{
 	
 	feedbackMsgType := fmt.Sprintf("%s_FEEDBACK", msgType)
@@ -270,6 +300,9 @@ func msgHandler(jsonMsg []byte) (feedback string, err error){
 
 		case "ADD_VDISK":
 			feedback, err = handleAddVdiskMsg(m, string(jsonMsg))
+
+		case "REMOVE_VDISK":
+			feedback, err = handleRmvVdiskMsg(m, string(jsonMsg))
 
 		case "AGENT_HEART_BEAT":
 			fmt.Println(string(jsonMsg))

@@ -3,11 +3,30 @@ package common
 import (
 	"fmt"
 	"encoding/json"
-	"bytes"
 	"errors"
 	"strconv"
 	"vdisk_monitor/src/common/etcdInterface"
 )
+
+//Vdisk structure
+//--vdisks
+//    |_vdiskID
+//         |_vmInfo
+//         |_backups
+//         		|_primary_bkp
+//         				|_backupInfo
+//         				|_daemonInfo
+//         		|_secondary_bkp
+//         				|_backupInfo
+//         				|_daemonInfo
+
+const VDISK_ROOT_NODE string = "vdisks"
+const VDISK_VM_INFO_NODE string = "vmInfo"
+const VDISK_BACKUPS_NODE string = "backups"
+const VDISK_PRIMARY_BKP_NODE string = "primary_bkp"
+const VDISK_SECONDARY_BKP_NODE string = "secondary_bkp"
+const VDISK_BACKUP_INFO_NODE string = "backupInfo"
+const VDISK_DAEMON_INFO_NODE string = "daemonInfo"
 
 func formatInt32(n int32) string {
     return strconv.FormatInt(int64(n), 10)
@@ -16,55 +35,52 @@ func formatInt32(n int32) string {
 //vdisk CRUD
 func getVdiskSubNodeKey(vdiskId string, subNode string) string{
 	
-	key := bytes.Buffer{}
-	
-	key.WriteString("/vdisks/")
-	key.WriteString(vdiskId)
-	key.WriteString(subNode)
-	
-	return key.String()
+	key := fmt.Sprintf("/%s/%s/%s", VDISK_ROOT_NODE, vdiskId, subNode)
+	return key
 }
 
 func getVdiskVmInfoKey(vdiskId string) string{
-	str := getVdiskSubNodeKey(vdiskId, "/vmInfo")
+	str := getVdiskSubNodeKey(vdiskId, VDISK_VM_INFO_NODE)
 	return str
 }
 
 func getVdiskBackupKey(vdiskId string, backupType BACKUP_TYPE) string{
 
-	var key string
+	var subNode string
 	switch backupType {
 	
 	case PRIMARY_BACKUP:
-		key = getVdiskSubNodeKey(vdiskId, "/backups/primary_bkp/backupInfo")
+		subNode = fmt.Sprintf("/%s/%s/%s", VDISK_BACKUPS_NODE, VDISK_PRIMARY_BKP_NODE, VDISK_BACKUP_INFO_NODE)
 
 	case SECONDARY_BACKUP:
-		key = getVdiskSubNodeKey(vdiskId, "/backups/secondary_bkp/backupInfo")
+		subNode = fmt.Sprintf("/%s/%s/%s", VDISK_BACKUPS_NODE, VDISK_SECONDARY_BKP_NODE, VDISK_BACKUP_INFO_NODE)
 	
 	default:
 		fmt.Printf("Invalid backupType:%d\n", backupType)
-		key = ""
+		subNode = ""
 	}
-
+	
+	key := getVdiskSubNodeKey(vdiskId, subNode)
 	return key
 }
 
 func getVdiskBackupDaemonInfoKey(vdiskId string, backupType BACKUP_TYPE) string{
 	
-	var key string
+	var subNode string
 
 	switch backupType {
 
 	case PRIMARY_BACKUP:
-		key = getVdiskSubNodeKey(vdiskId, "/backups/primary_bkp/daemonInfo")
+		subNode = fmt.Sprintf("/%s/%s/%s", VDISK_BACKUPS_NODE, VDISK_PRIMARY_BKP_NODE, VDISK_DAEMON_INFO_NODE)
 
 	case SECONDARY_BACKUP:
-		key = getVdiskSubNodeKey(vdiskId, "/backups/secondary_bkp/daemonInfo")
+		subNode = fmt.Sprintf("/%s/%s/%s", VDISK_BACKUPS_NODE, VDISK_SECONDARY_BKP_NODE, VDISK_DAEMON_INFO_NODE)
 
 	default:
-		key = ""
+		subNode = ""
 	}
 
+	key := getVdiskSubNodeKey(vdiskId, subNode)
 	return key
 }
 

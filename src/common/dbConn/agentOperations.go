@@ -10,10 +10,10 @@ import (
 )
 
 //Agent structure
-//--agent
+//--agents
 //    |_agentID
 //         |_basicInfo
-//         |_primary_vdisks#
+//         |_primary_vdisks
 //         |_secondary_vdisks
 const AGENT_ROOT_NODE string = "agents"
 const AGENT_BASICINFO_NODE string = "basicInfo"

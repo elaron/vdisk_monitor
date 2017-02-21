@@ -16,6 +16,11 @@ type AddVdiskMsg struct {
 	Path string
 }
 
+type RemoveVdiskMsg struct {
+	MsgType	 string
+	VdiskId string
+}
+
 type FeedbackMsg struct {
 	MsgType string
 	OpResult string	//SUCCESS/FAIL

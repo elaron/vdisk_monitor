@@ -6,7 +6,6 @@ import (
 	"time"
 	"errors"
 	"flag"
-	"sync"
 	"vdisk_monitor/src/common/dbConn"
 )
 
@@ -17,14 +16,21 @@ type AgentConfig struct {
 	CurrPort uint32
 	TcpServerPort uint32
 	HostIp	string
-	genAvailPortMutex sync.Mutex
+}
+
+type BufferChannel struct {
+	rmvVdisks chan string
+	addVdisks chan string
 }
 
 var g_agentConfig AgentConfig
+var g_buff BufferChannel
 
 func main() {
 
 	initAgentConfig()
+	initAgentBuffer()
+
 	sendRegisteAgentMsg()
 	
 	//go heartbeatToMds()
@@ -54,8 +60,11 @@ func initAgentConfig() {
 	g_agentConfig.PortRange[1] = 40000
 
 	g_agentConfig.CurrPort = g_agentConfig.PortRange[0]
+}
 
-	g_agentConfig.genAvailPortMutex = sync.Mutex{}
+func initAgentBuffer() {
+	g_buff.rmvVdisks = make(chan string)
+	g_buff.addVdisks = make(chan string)
 }
 
 func runAgent() {
@@ -63,6 +72,7 @@ func runAgent() {
 	go watchVdiskChange(g_agentConfig.AgentId, common.SECONDARY_BACKUP)
 
 	go sendAddVdiskMsgToMds()
+	go sendRemoveVdiskMsgToMds()
 	go setuplistener()
 }
 
