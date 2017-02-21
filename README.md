@@ -10,9 +10,13 @@ git clone git@github.com:golang/net.git
 ```
 Notes & References:
 
+[effective go](https://golang.org/doc/effective_go.html)
+
 [Google go 代码规范](https://github.com/golang/go/wiki/CodeReviewComments)
 
 [goroutine channel select](https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/02.7.md)
+
+[go channel](http://hustcat.github.io/channel/)
 
 [goroutine工作原理](https://www.zhihu.com/question/20862617)
 
