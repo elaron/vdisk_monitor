@@ -344,12 +344,12 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 	
-		Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
+		//Log(conn.RemoteAddr().String(), "receive data string:\n", string(buffer[:n]))
 		feedback, _ := msgHandler(buffer[:n])
 
 		buffer = make([]byte, 2048)
 
-		fmt.Println("Feedback:", feedback)
+		//fmt.Println("Feedback:", feedback)
 		
 		go sendFeedback(conn, feedback)
 	}
