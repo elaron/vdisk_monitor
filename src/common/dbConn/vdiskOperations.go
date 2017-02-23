@@ -337,7 +337,7 @@ func WatchSyncDaemonState(vdiskId string, bkpType BACKUP_TYPE) (state DAEMON_STA
 	}
 
 	state = daemonInfo.State
-	fmt.Printf("%d %s Daemon state:%d %s\n", bkpType, vdiskId, state, time.Now())
+	fmt.Printf("%d %s Daemon state:%d\n", bkpType, vdiskId, state
 
 	return
 }

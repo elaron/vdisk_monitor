@@ -241,12 +241,12 @@ func watchVdiskChange(agentId string, bkpType common.BACKUP_TYPE) {
 		}
 
 		for _,vdiskId := range addVdisks {
-			fmt.Printf("Start new vdisk %d %s %s\n", bkpType, vdiskId, time.Now())
+			fmt.Printf("Start new vdisk %d %s\n", bkpType, vdiskId)
 			startSync(vdiskId, bkpType)
 		}
 
 		for _,vdiskId := range rmvVdisks {
-			fmt.Printf("Remove vdisk %d %s %s\n", bkpType, vdiskId, time.Now())
+			fmt.Printf("Remove vdisk %d %s\n", bkpType, vdiskId)
 			removeSync(vdiskId, bkpType)
 		}
 	}
