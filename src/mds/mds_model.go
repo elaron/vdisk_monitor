@@ -160,15 +160,34 @@ func addVdisk(agentID string, vmId string, path string) (string, error){
 		return vdisk.Id, errors.New(s)
 	}
 
+	go func () {
+
+		vdiskId := vdisk.Id
+	
+		//fmt.Printf("Start watching originator daemonInfo %s\n", time.Now())
+		state, err := common.WatchSyncDaemonState(vdiskId, common.PRIMARY_BACKUP)
+		if err != nil {
+			fmt.Printf("Watch originator(%s) fail!\n", vdiskId)
+			return
+		}
+
+		if common.ACTIVE != state {
+			fmt.Printf("Originator of %s is not runing!\n", vdiskId)		
+			return
+		}
+
+		//append new vdiskId to peerAgent's secondary vdiskList
+		newSecondaryVdiskList := append(peerAgent.Secondary_vdisks, vdisk.Id)
+	
+		err = common.SetSecondaryVdisks(agent.BasicInfo.PeerAgentId, newSecondaryVdiskList)
+		if nil != err {
+			fmt.Printf("Update peerAgent(%s) fail, add vdisk(%s) fail!", agentID, path)
+			return
+		}
+	}()
+
 	//append new vdiskId into agent's primary vdiskList and peerAgent's secondary vdiskList
 	newPrimaryVdiskList := append(agent.Primary_vdisks, vdisk.Id)
-	newSecondaryVdiskList := append(peerAgent.Secondary_vdisks, vdisk.Id)
-
-	err = common.SetSecondaryVdisks(agent.BasicInfo.PeerAgentId, newSecondaryVdiskList)
-	if nil != err {
-		s := fmt.Sprintf("Update peerAgent(%s) fail, add vdisk(%s) fail!", agentID, path)
-		return vdisk.Id, errors.New(s)
-	}
 	
 	err = common.SetPrimaryVdisks(agentID, newPrimaryVdiskList)
 	if nil != err {

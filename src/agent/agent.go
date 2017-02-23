@@ -109,20 +109,6 @@ func getAvailablePort(num uint8) ([]uint32, error) {
 
 func startTerminator(vdiskId string){
 
-	fmt.Printf("Start watching originator daemonInfo %s\n", time.Now())
-
-	state, err := common.WatchSyncDaemonState(vdiskId, common.PRIMARY_BACKUP)
-	if err != nil {
-		fmt.Printf("Watch originator(%s) fail!\n", vdiskId)
-		return
-	}
-
-	if common.ACTIVE != state {
-
-		fmt.Printf("Originator of %s is not runing!\n", vdiskId)		
-		return
-	}
-
 	ports, err := getAvailablePort(4)
 	if nil != err {
 		fmt.Println(err.Error())
