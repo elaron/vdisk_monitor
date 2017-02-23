@@ -34,9 +34,8 @@ func handleAddVdiskFbMsg(m map[string]string, fbMsg string) error{
 		return errors.New(s)
 	}
 
-	vdiskId := msgBody
-
-	mock_removeVdisk(vdiskId)
+	//vdiskId := msgBody
+	//mock_removeVdisk(vdiskId)
 	
 	return nil
 }

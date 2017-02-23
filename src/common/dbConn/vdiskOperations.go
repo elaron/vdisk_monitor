@@ -2,6 +2,7 @@ package common
 	
 import (
 	"fmt"
+	"time"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -313,4 +314,30 @@ func EraseVdiskFromRemoveList(vdiskId string) error {
 	err = setListFunc(key, string(value))
 	
 	return err
+}
+
+func WatchSyncDaemonState(vdiskId string, bkpType BACKUP_TYPE) (state DAEMON_STATE_TYPE, err error){
+	
+	key := getVdiskBackupDaemonInfoKey(vdiskId, bkpType)
+
+	watchFunc := etcdIntf.WatchKey()
+
+	_, _, err = watchFunc(key)
+	if nil != err {
+		s := fmt.Sprintf("Watch SyncDaemon state fail! Err :%s\n", err.Error())
+		err = errors.New(s)
+		return 
+	}
+
+	daemonInfo,err := GetVdiskBackupDaemonInfo(vdiskId, bkpType)
+	if err != nil {
+		s := fmt.Sprintf("Get vdisk(%s) daemon(%d) info fail!", vdiskId, bkpType)
+		err = errors.New(s)
+		return
+	}
+
+	state = daemonInfo.State
+	fmt.Printf("%d %s Daemon state:%d %s\n", bkpType, vdiskId, state, time.Now())
+
+	return
 }

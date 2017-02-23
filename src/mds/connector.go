@@ -208,7 +208,7 @@ func handleAddVdiskMsg(m map[string]interface{}, msg string) (feedback string, e
 	vdiskId, err := addVdisk(agentID, vmId, path)
 	if nil != err {
 		feedback = genCommonMsgFeedback("ADD_VDISK", "FAIL", err.Error())
-		fmt.Println("Add vdisk fail")
+		fmt.Printf("Add vdisk fail, Err:%s\n", err.Error())
 		return
 	}
 
@@ -302,6 +302,7 @@ func msgHandler(jsonMsg []byte) (feedback string, err error){
 			feedback, err = handleAddVdiskMsg(m, string(jsonMsg))
 
 		case "REMOVE_VDISK":
+			fmt.Println(string(jsonMsg))
 			feedback, err = handleRmvVdiskMsg(m, string(jsonMsg))
 
 		case "AGENT_HEART_BEAT":

@@ -2,7 +2,8 @@ package common
 
 //define enums
 const (
-	ACTIVE = iota
+	UNAVAILABLE = iota
+	ACTIVE 
 	LOSS_CONN
 	REMOVED
 	DAEMON_STATE_TYPE_BUTT

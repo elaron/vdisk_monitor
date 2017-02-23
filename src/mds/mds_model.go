@@ -45,7 +45,16 @@ func addAgent(agentId string, ip string, hostname string) error{
 	agentList, _ := common.GetAgentList()
 
 	agentExist, msg := isAgentExist(agentList, agent)
-	if true == agentExist {
+
+	if false == agentExist {
+
+		err := common.CreateAgent(agent)
+		if nil != err {
+			s := fmt.Sprintf("Create agent fail, Err: %s", err.Error())
+			return errors.New(s)
+		}
+
+	}else{
 
 		info, err := common.GetAgentBasicInfo(agentId)
 		
@@ -54,12 +63,6 @@ func addAgent(agentId string, ip string, hostname string) error{
 			s := fmt.Sprintf("Add agent fail, because of %s", msg)
 			return errors.New(s)				
 		}
-	}
-
-	err := common.CreateAgent(agent)
-	if nil != err {
-		s := fmt.Sprintf("Create agent fail, Err: %s", err.Error())
-		return errors.New(s)
 	}
 
 	return nil
@@ -158,21 +161,21 @@ func addVdisk(agentID string, vmId string, path string) (string, error){
 	}
 
 	//append new vdiskId into agent's primary vdiskList and peerAgent's secondary vdiskList
-	agent.Primary_vdisks = append(agent.Primary_vdisks, vdisk.Id)
-	peerAgent.Secondary_vdisks = append(peerAgent.Secondary_vdisks, vdisk.Id)
+	newPrimaryVdiskList := append(agent.Primary_vdisks, vdisk.Id)
+	newSecondaryVdiskList := append(peerAgent.Secondary_vdisks, vdisk.Id)
 
-	err = common.UpdateAgent(agent)
-	if nil != err {
-		s := fmt.Sprintf("Update agent(%s) fail, add vdisk(%s) fail!", agentID, path)
-		return vdisk.Id, errors.New(s)
-	}
-
-	err = common.UpdateAgent(peerAgent)
+	err = common.SetSecondaryVdisks(agent.BasicInfo.PeerAgentId, newSecondaryVdiskList)
 	if nil != err {
 		s := fmt.Sprintf("Update peerAgent(%s) fail, add vdisk(%s) fail!", agentID, path)
 		return vdisk.Id, errors.New(s)
 	}
 	
+	err = common.SetPrimaryVdisks(agentID, newPrimaryVdiskList)
+	if nil != err {
+		s := fmt.Sprintf("Update agent(%s) fail, add vdisk(%s) fail!", agentID, path)
+		return vdisk.Id, errors.New(s)
+	}
+
 	return vdisk.Id, nil
 }
 
@@ -209,9 +212,9 @@ func removeVdisk(vdiskId string) error {
 	if nil != err {
 		return err
 	}
-	primaryVdisks = common.RemoveVdiskIdInList(vdiskId, primaryVdisks)
+	newList := common.RemoveVdiskIdInList(vdiskId, primaryVdisks)
 
-	err = common.SetPrimaryVdisks(primaryBkp.ResidentAgentID, primaryVdisks)
+	err = common.SetPrimaryVdisks(primaryBkp.ResidentAgentID, newList)
 	if nil != err {
 		return err
 	}
@@ -226,9 +229,9 @@ func removeVdisk(vdiskId string) error {
 	if nil != err {
 		return err
 	}
-	secondaryVdisks = common.RemoveVdiskIdInList(vdiskId, secondaryVdisks)
+	newList = common.RemoveVdiskIdInList(vdiskId, secondaryVdisks)
 
-	err = common.SetSecondaryVdisks(secondaryBkp.ResidentAgentID, secondaryVdisks)
+	err = common.SetSecondaryVdisks(secondaryBkp.ResidentAgentID, newList)
 	if nil != err {
 		return err
 	}
@@ -281,7 +284,8 @@ func checkWaitToRemoveVdisk() {
 			continue
 		}
 
-		if origInfo.State == common.REMOVED && termInfo.State == common.REMOVED {
+		canBeRemoved := (origInfo.State == common.REMOVED || origInfo.State == common.UNAVAILABLE) && (termInfo.State == common.REMOVED || termInfo.State == common.UNAVAILABLE)
+		if true == canBeRemoved {
 			common.DeleteVdisk(vdiskId)
 			common.EraseVdiskFromRemoveList(vdiskId)
 		}

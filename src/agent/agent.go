@@ -107,24 +107,123 @@ func getAvailablePort(num uint8) ([]uint32, error) {
 	return []uint32{}, errors.New("Get ports fail")	
 }
 
-func startSync(vdiskId string, bkpType common.BACKUP_TYPE) {
-	
+func startTerminator(vdiskId string){
+
+	fmt.Printf("Start watching originator daemonInfo %s\n", time.Now())
+
+	state, err := common.WatchSyncDaemonState(vdiskId, common.PRIMARY_BACKUP)
+	if err != nil {
+		fmt.Printf("Watch originator(%s) fail!\n", vdiskId)
+		return
+	}
+
+	if common.ACTIVE != state {
+
+		fmt.Printf("Originator of %s is not runing!\n", vdiskId)		
+		return
+	}
+
 	ports, err := getAvailablePort(4)
 	if nil != err {
 		fmt.Println(err.Error())
 	}
 
-	fmt.Println(bkpType, vdiskId, ports)
+	fmt.Println(common.SECONDARY_BACKUP, vdiskId, ports)
 
-	syncInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, bkpType)
+	origInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, common.PRIMARY_BACKUP)
+	if nil != err {
+		return
+	}
+
+	termInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, common.SECONDARY_BACKUP)
+	if nil != err {
+		return
+	}
+
+	fmt.Println("Originator Tcp_server_port:", origInfo.Tcp_server_port)
+
+	//Use Orig TCP port and Term tcp port to start terminator
+
+	termInfo.Tcp_server_port = ports
+	termInfo.LastHeartBeatTime = time.Now().String()
+	termInfo.State = common.ACTIVE
+
+	common.SetVdiskBackupDaemonInfo(vdiskId, termInfo, common.SECONDARY_BACKUP)
+}
+
+func watchTerminatorState(vdiskId string, timer *time.Timer) {
+	
+	state, err := common.WatchSyncDaemonState(vdiskId, common.SECONDARY_BACKUP)
+	if err != nil {
+		fmt.Printf("Watch terminator(%s) fail!\n", vdiskId)
+		return
+	}
+
+	if common.ACTIVE == state {
+		fmt.Printf("Add vdisk(%s) success!\n", vdiskId)			
+		
+		//Start terminator success ,so there's no need to remove this vdisk
+		timer.Stop()
+	}
+}
+
+func startOriginator(vdiskId string) {
+
+	//get available Tcp server port
+	ports, err := getAvailablePort(4)
+	if nil != err {
+		fmt.Println(err.Error())
+	}
+
+	fmt.Println(common.PRIMARY_BACKUP, vdiskId, ports)
+
+
+	//start sync originator
+	//TODO
+
+	syncInfo, err := common.GetVdiskBackupDaemonInfo(vdiskId, common.PRIMARY_BACKUP)
 	if nil != err {
 		return
 	}
 
 	syncInfo.Tcp_server_port = ports
 	syncInfo.LastHeartBeatTime = time.Now().String()
+	syncInfo.State = common.ACTIVE
+	
+	timer := time.NewTimer(5 * time.Second)
+	go func() {
+        <- timer.C
 
-	common.SetVdiskBackupDaemonInfo(vdiskId, syncInfo, bkpType)
+        //If time's up and terminator is still not active, 
+        //then we think this ADD_VDISK operation is fail
+        fmt.Println("Time out. Add vdisk fail!")
+        g_buff.rmvVdisks <- vdiskId
+    }()
+
+    //watch sync terminator
+	go watchTerminatorState(vdiskId, timer)
+
+	//update sync orignator daemonInfo on etcd
+	err = common.SetVdiskBackupDaemonInfo(vdiskId, syncInfo, common.PRIMARY_BACKUP)
+	if err != nil {
+		fmt.Printf("Set originator info fail, Err :%s \n", err.Error())
+	}
+}
+
+func startSync(vdiskId string, bkpType common.BACKUP_TYPE) {
+	
+	if common.PRIMARY_BACKUP == bkpType {
+		go startOriginator(vdiskId)
+
+	} else if common.SECONDARY_BACKUP == bkpType{
+		go startTerminator(vdiskId)
+	
+	}else{
+		fmt.Printf("Unrecognize bkpType:%d, start sync for %s fail!\n", 
+			bkpType,
+			vdiskId)
+	}
+
 }
 
 func removeSync(vdiskId string, bkpType common.BACKUP_TYPE) {
@@ -150,16 +249,18 @@ func watchVdiskChange(agentId string, bkpType common.BACKUP_TYPE) {
 		if err != nil {
 			list := []string{"primary_vdisks", "secondary_vdisks"}
 			fmt.Printf("Stop watching %s vdisk list\n", list[bkpType])
+			
+			time.Sleep(30 * time.Second)
 			continue
 		}
 
 		for _,vdiskId := range addVdisks {
-			fmt.Printf("Start new vdisk %s\n", vdiskId)
+			fmt.Printf("Start new vdisk %d %s %s\n", bkpType, vdiskId, time.Now())
 			startSync(vdiskId, bkpType)
 		}
 
 		for _,vdiskId := range rmvVdisks {
-			fmt.Printf("Remove vdisk %s\n", vdiskId)
+			fmt.Printf("Remove vdisk %d %s %s\n", bkpType, vdiskId, time.Now())
 			removeSync(vdiskId, bkpType)
 		}
 	}
