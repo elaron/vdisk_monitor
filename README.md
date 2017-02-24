@@ -54,6 +54,8 @@ git clone git@github.com:golang/net.git
 
 [go 使用共享内存](http://studygolang.com/articles/743)
 
+[go lldp package](https://godoc.org/github.com/mdlayher/lldp)
+
 [laws-of-reflection](https://blog.golang.org/laws-of-reflection)
 
 [go RPC](https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/8.4.md)
